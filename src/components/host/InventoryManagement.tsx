@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Search, Plus, Filter, MoreHorizontal, Edit, Trash2, Eye, QrCode, Grid, List, Download, Upload } from 'lucide-react';
-import { mockItems } from '../../data/mockData';
+import { Search, Plus, Filter, Edit, Trash2, Eye, QrCode, Grid, List, Download, Upload } from 'lucide-react';
+import { useLibrary } from '../../context/LibraryContext';
 import { Item } from '../../types';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
@@ -10,7 +10,7 @@ import Select from '../ui/Select';
 import Modal from '../ui/Modal';
 
 const InventoryManagement: React.FC = () => {
-  const [items, setItems] = useState<Item[]>(mockItems);
+  const { items, addItem, updateItem, deleteItem } = useLibrary();
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -52,8 +52,8 @@ const InventoryManagement: React.FC = () => {
       return matchesSearch && matchesCategory && matchesStatus && matchesCondition;
     })
     .sort((a, b) => {
-      let aValue: any = a[sortBy as keyof Item];
-      let bValue: any = b[sortBy as keyof Item];
+      let aValue: string | number = a[sortBy as keyof Item] as string | number;
+      let bValue: string | number = b[sortBy as keyof Item] as string | number;
       
       if (sortBy === 'replacementValue') {
         aValue = parseFloat(aValue.toString());
@@ -103,8 +103,7 @@ const InventoryManagement: React.FC = () => {
   };
 
   const handleAddItem = () => {
-    const item: Item = {
-      id: `item${items.length + 1}`,
+    addItem({
       libraryId: 'lib1',
       name: newItem.name,
       description: newItem.description,
@@ -117,11 +116,8 @@ const InventoryManagement: React.FC = () => {
       status: 'available',
       imageUrls: newItem.imageUrl ? [newItem.imageUrl] : ['https://images.pexels.com/photos/1148998/pexels-photo-1148998.jpeg?auto=compress&cs=tinysrgb&w=400'],
       quantity: parseInt(newItem.quantity),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+    });
 
-    setItems([...items, item]);
     setIsAddModalOpen(false);
     resetNewItem();
   };
@@ -129,25 +125,18 @@ const InventoryManagement: React.FC = () => {
   const handleEditItem = () => {
     if (!selectedItem) return;
 
-    const updatedItems = items.map(item => 
-      item.id === selectedItem.id 
-        ? { 
-            ...item, 
-            name: newItem.name,
-            description: newItem.description,
-            category: newItem.category,
-            ageRecommendation: newItem.ageRecommendation,
-            condition: newItem.condition,
-            replacementValue: parseFloat(newItem.replacementValue),
-            lendingPeriod: parseInt(newItem.lendingPeriod),
-            barcode: newItem.barcode,
-            quantity: parseInt(newItem.quantity),
-            updatedAt: new Date().toISOString()
-          }
-        : item
-    );
+    updateItem(selectedItem.id, {
+      name: newItem.name,
+      description: newItem.description,
+      category: newItem.category,
+      ageRecommendation: newItem.ageRecommendation,
+      condition: newItem.condition,
+      replacementValue: parseFloat(newItem.replacementValue),
+      lendingPeriod: parseInt(newItem.lendingPeriod),
+      barcode: newItem.barcode,
+      quantity: parseInt(newItem.quantity),
+    });
 
-    setItems(updatedItems);
     setIsEditModalOpen(false);
     setSelectedItem(null);
     resetNewItem();
@@ -156,7 +145,7 @@ const InventoryManagement: React.FC = () => {
   const handleDeleteItem = () => {
     if (!selectedItem) return;
     
-    setItems(items.filter(item => item.id !== selectedItem.id));
+    deleteItem(selectedItem.id);
     setIsDeleteModalOpen(false);
     setSelectedItem(null);
   };
@@ -580,7 +569,7 @@ const InventoryManagement: React.FC = () => {
             <Select
               label="Condition"
               value={newItem.condition}
-              onChange={(e) => setNewItem({ ...newItem, condition: e.target.value as any })}
+              onChange={(e) => setNewItem({ ...newItem, condition: e.target.value as Item['condition'] })}
               options={conditions.map(condition => ({ 
                 value: condition, 
                 label: condition.charAt(0).toUpperCase() + condition.slice(1) 
@@ -694,7 +683,7 @@ const InventoryManagement: React.FC = () => {
             <Select
               label="Condition"
               value={newItem.condition}
-              onChange={(e) => setNewItem({ ...newItem, condition: e.target.value as any })}
+              onChange={(e) => setNewItem({ ...newItem, condition: e.target.value as Item['condition'] })}
               options={conditions.map(condition => ({ 
                 value: condition, 
                 label: condition.charAt(0).toUpperCase() + condition.slice(1) 

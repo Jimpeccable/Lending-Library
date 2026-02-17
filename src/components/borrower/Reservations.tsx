@@ -4,16 +4,18 @@ import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 import Modal from '../ui/Modal';
-import { mockReservations } from '../../data/mockData';
+import { useLibrary } from '../../context/LibraryContext';
+import { useAuth } from '../../context/AuthContext';
 import type { Reservation } from '../../types';
 
 export function Reservations() {
-  const [reservations, setReservations] = useState<Reservation[]>(mockReservations);
+  const { reservations, cancelReservation } = useLibrary();
+  const { user } = useAuth();
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
 
   const handleCancelReservation = (reservationId: string) => {
-    setReservations(prev => prev.filter(r => r.id !== reservationId));
+    cancelReservation(reservationId);
     setShowCancelModal(false);
     setSelectedReservation(null);
   };
@@ -36,9 +38,10 @@ export function Reservations() {
     }
   };
 
-  const activeReservations = reservations.filter(r => r.status === 'active');
-  const readyReservations = reservations.filter(r => r.status === 'ready');
-  const expiredReservations = reservations.filter(r => r.status === 'expired');
+  const userReservations = reservations.filter(r => r.borrowerId === user?.id);
+  const activeReservations = userReservations.filter(r => r.status === 'active');
+  const readyReservations = userReservations.filter(r => r.status === 'ready');
+  const expiredReservations = userReservations.filter(r => r.status === 'expired');
 
   return (
     <div className="space-y-6">

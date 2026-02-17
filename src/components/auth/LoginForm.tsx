@@ -26,7 +26,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
 
     try {
       await login(formData.email, formData.password);
-    } catch (err) {
+    } catch {
       setError('Invalid email or password');
     } finally {
       setIsLoading(false);

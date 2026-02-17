@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BarChart3, Download, Calendar, TrendingUp, Users, Package, DollarSign, FileText } from 'lucide-react';
+import { BarChart3, Download, Calendar, Users, Package, DollarSign } from 'lucide-react';
 import { mockItems, mockLoans, mockMembers } from '../../data/mockData';
 import Button from '../ui/Button';
 import Card from '../ui/Card';

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Search, Filter, Heart, Calendar, Star, MapPin } from 'lucide-react';
-import { mockItems } from '../../data/mockData';
-import { Item } from '../../types';
+import { Search, Filter, Heart, Calendar, Star, MapPin, Package } from 'lucide-react';
+import { useLibrary } from '../../context/LibraryContext';
+import { useAuth } from '../../context/AuthContext';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import Badge from '../ui/Badge';
@@ -9,14 +9,15 @@ import Input from '../ui/Input';
 import Select from '../ui/Select';
 
 const ItemBrowser: React.FC = () => {
-  const [items] = useState<Item[]>(mockItems.filter(item => item.status === 'available'));
+  const { items, reserveItem } = useLibrary();
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [ageFilter, setAgeFilter] = useState('');
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
-  const categories = [...new Set(mockItems.map(item => item.category))];
-  const ageGroups = [...new Set(mockItems.map(item => item.ageRecommendation))];
+  const categories = [...new Set(items.map(item => item.category))];
+  const ageGroups = [...new Set(items.map(item => item.ageRecommendation))];
 
   const filteredItems = items.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -207,9 +208,13 @@ const ItemBrowser: React.FC = () => {
               )}
               
               <div className="flex space-x-2 pt-2">
-                <Button className="flex-1">
+                <Button
+                  className="flex-1"
+                  disabled={item.status !== 'available'}
+                  onClick={() => user && reserveItem(item.id, user.id)}
+                >
                   <Calendar className="w-4 h-4 mr-2" />
-                  Reserve
+                  {item.status === 'available' ? 'Reserve' : item.status.charAt(0).toUpperCase() + item.status.slice(1)}
                 </Button>
                 <Button variant="outline" className="flex-1">
                   View Details

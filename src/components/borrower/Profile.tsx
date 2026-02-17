@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Save, Edit, CreditCard, Bell, Shield, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { mockMembershipTiers } from '../../data/mockData';
+import { useLibrary } from '../../context/LibraryContext';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import Badge from '../ui/Badge';
@@ -10,6 +10,7 @@ import Select from '../ui/Select';
 
 const Profile: React.FC = () => {
   const { user } = useAuth();
+  const { membershipTiers, loans } = useLibrary();
   const [activeTab, setActiveTab] = useState('profile');
   const [isEditing, setIsEditing] = useState(false);
   
@@ -30,13 +31,15 @@ const Profile: React.FC = () => {
     promotionalOffers: false
   });
 
-  const membershipTier = mockMembershipTiers.find(tier => tier.id === 'tier2');
+  const membershipTier = membershipTiers.find(tier => tier.id === user?.membershipTierId) || membershipTiers[0];
   
+  const userLoans = loans.filter(l => l.borrowerId === user?.id);
+
   const membershipStats = {
-    joinDate: '2024-01-15',
-    totalLoans: 12,
-    currentLoans: 2,
-    favoriteItems: 5,
+    joinDate: user?.createdAt || '2024-01-15',
+    totalLoans: userLoans.length,
+    currentLoans: userLoans.filter(l => l.status === 'active').length,
+    favoriteItems: 5, // Keep mock for now
     outstandingFees: 0
   };
 

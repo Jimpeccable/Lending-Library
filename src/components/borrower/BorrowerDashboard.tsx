@@ -9,14 +9,18 @@ import {
   AlertCircle,
   CheckCircle
 } from 'lucide-react';
-import { mockLoans, mockItems, mockReservations } from '../../data/mockData';
+import { useLibrary } from '../../context/LibraryContext';
+import { useAuth } from '../../context/AuthContext';
 import Card from '../ui/Card';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 
 const BorrowerDashboard: React.FC = () => {
-  const userLoans = mockLoans.filter(loan => loan.borrowerId === '2');
-  const userReservations = mockReservations.filter(res => res.borrowerId === '2');
+  const { loans, items, reservations } = useLibrary();
+  const { user } = useAuth();
+
+  const userLoans = loans.filter(loan => loan.borrowerId === user?.id);
+  const userReservations = reservations.filter(res => res.borrowerId === user?.id);
   
   const stats = {
     activeLoans: userLoans.filter(loan => loan.status === 'active').length,
@@ -26,7 +30,7 @@ const BorrowerDashboard: React.FC = () => {
   };
 
   const currentLoans = userLoans.map(loan => {
-    const item = mockItems.find(item => item.id === loan.itemId);
+    const item = items.find(item => item.id === loan.itemId);
     return { ...loan, item };
   }).filter(loan => loan.item);
 

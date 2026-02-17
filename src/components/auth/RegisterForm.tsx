@@ -42,7 +42,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleMode }) => {
 
     try {
       await register(formData.email, formData.password, formData.fullName, formData.role);
-    } catch (err) {
+    } catch {
       setError('Registration failed. Please try again.');
     } finally {
       setIsLoading(false);

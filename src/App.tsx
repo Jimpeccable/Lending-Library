@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth, AuthProvider } from './context/AuthContext';
+import { LibraryProvider } from './context/LibraryContext';
+import { ToastProvider } from './context/ToastContext';
 import LoginForm from './components/auth/LoginForm';
 import RegisterForm from './components/auth/RegisterForm';
 import Sidebar from './components/layout/Sidebar';
@@ -140,7 +142,11 @@ const MainApp: React.FC = () => {
 function App() {
   return (
     <AuthProvider>
-      <MainApp />
+      <ToastProvider>
+        <LibraryProvider>
+          <MainApp />
+        </LibraryProvider>
+      </ToastProvider>
     </AuthProvider>
   );
 }

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Search, Filter, MoreHorizontal, Mail, Phone, UserCheck, UserX, CreditCard } from 'lucide-react';
-import { mockMembers, mockMembershipTiers } from '../../data/mockData';
-import { Member, MembershipTier } from '../../types';
+import { Search, Filter, MoreHorizontal, Mail, UserCheck, CreditCard } from 'lucide-react';
+import { useLibrary } from '../../context/LibraryContext';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import Badge from '../ui/Badge';
@@ -9,8 +8,7 @@ import Input from '../ui/Input';
 import Select from '../ui/Select';
 
 const MemberManagement: React.FC = () => {
-  const [members] = useState<Member[]>(mockMembers);
-  const [membershipTiers] = useState<MembershipTier[]>(mockMembershipTiers);
+  const { members, membershipTiers } = useLibrary();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [tierFilter, setTierFilter] = useState('');

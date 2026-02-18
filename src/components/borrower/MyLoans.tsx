@@ -1,24 +1,28 @@
 import React, { useState } from 'react';
-import { Calendar, Clock, AlertTriangle, CheckCircle, RotateCcw, Star } from 'lucide-react';
-import { mockLoans, mockItems } from '../../data/mockData';
+import { Clock, AlertTriangle, CheckCircle, RotateCcw, Star } from 'lucide-react';
+import { useLibrary } from '../../context/LibraryContext';
+import { useAuth } from '../../context/AuthContext';
+import { Loan, Item } from '../../types';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import Badge from '../ui/Badge';
 import Modal from '../ui/Modal';
 
 const MyLoans: React.FC = () => {
+  const { loans, items } = useLibrary();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('current');
   const [isRenewModalOpen, setIsRenewModalOpen] = useState(false);
-  const [selectedLoan, setSelectedLoan] = useState<any>(null);
+  const [selectedLoan, setSelectedLoan] = useState<(Loan & { item: Item }) | null>(null);
   const [renewalReason, setRenewalReason] = useState('');
 
-  // Filter loans for current user (borrower ID: '2')
-  const userLoans = mockLoans.filter(loan => loan.borrowerId === '2');
+  // Filter loans for current user
+  const userLoans = loans.filter(loan => loan.borrowerId === user?.id);
   
   const currentLoans = userLoans
     .filter(loan => loan.status === 'active')
     .map(loan => {
-      const item = mockItems.find(item => item.id === loan.itemId);
+      const item = items.find(item => item.id === loan.itemId);
       return { ...loan, item };
     })
     .filter(loan => loan.item);
@@ -56,7 +60,7 @@ const MyLoans: React.FC = () => {
     return Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
   };
 
-  const handleRenewRequest = (loan: any) => {
+  const handleRenewRequest = (loan: Loan & { item: Item }) => {
     setSelectedLoan(loan);
     setIsRenewModalOpen(true);
   };

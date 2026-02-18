@@ -9,15 +9,20 @@ import {
   Calendar,
   Bell
 } from 'lucide-react';
-import { mockItems, mockMembers, mockLoans } from '../../data/mockData';
+import { useLibrary } from '../../context/LibraryContext';
 import Card from '../ui/Card';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
+import Modal from '../ui/Modal';
+import Select from '../ui/Select';
+import Input from '../ui/Input';
 
 const HostDashboard: React.FC = () => {
-  const items = mockItems;
-  const members = mockMembers;
-  const loans = mockLoans;
+  const { items, members, loans, checkoutItem } = useLibrary();
+  const [isQuickCheckoutOpen, setIsQuickCheckoutOpen] = useState(false);
+  const [selectedItemId, setSelectedItemId] = useState('');
+  const [selectedMemberId, setSelectedMemberId] = useState('');
+  const [dueDate, setDueDate] = useState('');
 
   const stats = {
     totalItems: items.length,
@@ -67,6 +72,19 @@ const HostDashboard: React.FC = () => {
     }
   ];
 
+  const handleQuickCheckout = () => {
+    if (selectedItemId && selectedMemberId && dueDate) {
+      const member = members.find(m => m.id === selectedMemberId);
+      if (member) {
+        checkoutItem(selectedItemId, member.userId, new Date(dueDate).toISOString());
+        setIsQuickCheckoutOpen(false);
+        setSelectedItemId('');
+        setSelectedMemberId('');
+        setDueDate('');
+      }
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -80,7 +98,7 @@ const HostDashboard: React.FC = () => {
             <Calendar className="w-4 h-4 mr-2" />
             View Calendar
           </Button>
-          <Button>
+          <Button onClick={() => setIsQuickCheckoutOpen(true)}>
             <Package className="w-4 h-4 mr-2" />
             Quick Checkout
           </Button>
@@ -222,6 +240,57 @@ const HostDashboard: React.FC = () => {
           </Card>
         </div>
       </div>
+
+      {/* Quick Checkout Modal */}
+      <Modal
+        isOpen={isQuickCheckoutOpen}
+        onClose={() => setIsQuickCheckoutOpen(false)}
+        title="Quick Checkout"
+        size="md"
+      >
+        <div className="space-y-4">
+          <Select
+            label="Select Item"
+            value={selectedItemId}
+            onChange={(e) => setSelectedItemId(e.target.value)}
+            options={items
+              .filter(item => item.status === 'available')
+              .map(item => ({ value: item.id, label: `${item.name} (${item.barcode})` }))
+            }
+            placeholder="Choose an item..."
+            required
+          />
+
+          <Select
+            label="Select Member"
+            value={selectedMemberId}
+            onChange={(e) => setSelectedMemberId(e.target.value)}
+            options={members.map(member => ({ value: member.id, label: member.userId === '2' ? 'John Borrower' : `Member ${member.id}` }))}
+            placeholder="Choose a member..."
+            required
+          />
+
+          <Input
+            label="Due Date"
+            type="date"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+            required
+          />
+
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button variant="outline" onClick={() => setIsQuickCheckoutOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleQuickCheckout}
+              disabled={!selectedItemId || !selectedMemberId || !dueDate}
+            >
+              Confirm Checkout
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

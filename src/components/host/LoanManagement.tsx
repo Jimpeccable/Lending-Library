@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Search, Filter, Calendar, CheckCircle, AlertTriangle, Clock, MoreHorizontal, Mail, Phone } from 'lucide-react';
-import { mockLoans, mockItems, mockMembers } from '../../data/mockData';
-import { Loan } from '../../types';
+import { Search, Filter, CheckCircle, AlertTriangle, MoreHorizontal, Mail } from 'lucide-react';
+import { useLibrary } from '../../context/LibraryContext';
+import { Loan, Item } from '../../types';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import Badge from '../ui/Badge';
@@ -10,18 +10,24 @@ import Select from '../ui/Select';
 import Modal from '../ui/Modal';
 
 const LoanManagement: React.FC = () => {
-  const [loans] = useState<Loan[]>(mockLoans);
+  const { loans, items, returnItem, members } = useLibrary();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
   const [returnCondition, setReturnCondition] = useState('');
   const [returnNotes, setReturnNotes] = useState('');
+  const [lateFee, setLateFee] = useState(0);
 
   const getLoansWithDetails = () => {
     return loans.map(loan => {
-      const item = mockItems.find(item => item.id === loan.itemId);
-      const borrower = { id: loan.borrowerId, name: 'John Borrower', email: 'john@example.com' }; // Mock borrower data
+      const item = items.find(item => item.id === loan.itemId);
+      const member = members.find(m => m.userId === loan.borrowerId);
+      const borrower = {
+        id: loan.borrowerId,
+        name: member?.userId === '2' ? 'John Borrower' : 'Library Member',
+        email: member?.userId === '2' ? 'john@example.com' : 'member@example.com'
+      };
       return { ...loan, item, borrower };
     }).filter(loan => loan.item && loan.borrower);
   };
@@ -57,18 +63,21 @@ const LoanManagement: React.FC = () => {
     return Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
   };
 
-  const handleReturnItem = (loan: any) => {
+  const handleReturnItem = (loan: Loan & { item: Item; borrower: { id: string; name: string; email: string } }) => {
     setSelectedLoan(loan);
+    const daysOverdue = Math.max(0, getDaysUntilDue(loan.dueDate) * -1);
+    setLateFee(daysOverdue * 1.5); // $1.50 per day late
     setIsReturnModalOpen(true);
   };
 
   const processReturn = () => {
-    // In a real app, this would update the loan status
-    console.log('Processing return:', { selectedLoan, returnCondition, returnNotes });
-    setIsReturnModalOpen(false);
-    setSelectedLoan(null);
-    setReturnCondition('');
-    setReturnNotes('');
+    if (selectedLoan) {
+      returnItem(selectedLoan.id, returnCondition as Item['condition'], returnNotes);
+      setIsReturnModalOpen(false);
+      setSelectedLoan(null);
+      setReturnCondition('');
+      setReturnNotes('');
+    }
   };
 
   const statuses = ['active', 'overdue', 'returned', 'lost'];
@@ -265,6 +274,16 @@ const LoanManagement: React.FC = () => {
       >
         {selectedLoan && (
           <div className="space-y-4">
+            {lateFee > 0 && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-3">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+                <div>
+                  <p className="text-sm font-semibold text-red-800">Late Return detected</p>
+                  <p className="text-sm text-red-700">Calculated late fee: ${lateFee.toFixed(2)}</p>
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
               <img
                 src={selectedLoan.item!.imageUrls[0]}

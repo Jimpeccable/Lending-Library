@@ -9,22 +9,22 @@ import {
   Server,
   Shield
 } from 'lucide-react';
-import { mockLibraries, mockItems, mockMembers } from '../../data/mockData';
+import { useLibrary } from '../../context/LibraryContext';
 import Card from '../ui/Card';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 
 const SuperUserDashboard: React.FC = () => {
-  const libraries = mockLibraries;
-  const totalItems = mockItems.length;
-  const totalMembers = mockMembers.length;
+  const { libraries, items, members, loans } = useLibrary();
+  const totalItems = items.length;
+  const totalMembers = members.length;
 
   const platformStats = {
     totalLibraries: libraries.length,
     totalItems,
     totalMembers,
     totalRevenue: 15750.25,
-    activeLoans: 156,
+    activeLoans: loans.filter(l => l.status === 'active').length,
     monthlyGrowth: 12.5
   };
 

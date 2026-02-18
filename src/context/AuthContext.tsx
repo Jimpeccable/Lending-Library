@@ -62,6 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const login = async (email: string, password: string) => {
     // Simulate login
     const user = mockUsers.find(u => u.email === email);
@@ -86,6 +87,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const register = async (email: string, password: string, fullName: string, role: 'host' | 'borrower') => {
     // Simulate registration
     const newUser: User = {

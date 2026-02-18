@@ -3,7 +3,6 @@ import {
   Home, 
   Package, 
   Users, 
-  FileText, 
   CreditCard, 
   MessageSquare, 
   Settings,

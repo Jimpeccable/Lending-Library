@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Send, Search, Mail, MessageSquare, Bell, Plus } from 'lucide-react';
+import { useLibrary } from '../../context/LibraryContext';
+import { useAuth } from '../../context/AuthContext';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import Badge from '../ui/Badge';
@@ -8,75 +10,52 @@ import Select from '../ui/Select';
 import Modal from '../ui/Modal';
 
 const Messages: React.FC = () => {
-  const [selectedConversation, setSelectedConversation] = useState<string | null>('1');
+  const { messages, sendMessage } = useLibrary();
+  const { user } = useAuth();
+  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [messageText, setMessageText] = useState('');
   const [isComposeModalOpen, setIsComposeModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const conversations = [
-    {
-      id: '1',
-      member: 'John Borrower',
-      lastMessage: 'Thank you for the reminder about the due date!',
-      timestamp: '2 hours ago',
-      unread: 0,
-      status: 'active'
-    },
-    {
-      id: '2',
-      member: 'Sarah Johnson',
-      lastMessage: 'Is it possible to extend my loan for the wooden blocks?',
-      timestamp: '1 day ago',
-      unread: 2,
-      status: 'pending'
-    },
-    {
-      id: '3',
-      member: 'Mike Wilson',
-      lastMessage: 'I accidentally damaged the toy car. What should I do?',
-      timestamp: '2 days ago',
-      unread: 1,
-      status: 'urgent'
-    }
-  ];
+  interface Conversation {
+    id: string;
+    member: string;
+    lastMessage: string;
+    timestamp: string;
+    unread: number;
+    status: 'active' | 'pending' | 'urgent';
+  }
 
-  const messages = [
-    {
-      id: '1',
-      sender: 'John Borrower',
-      content: 'Hi! I wanted to ask about extending my loan for the LEGO set.',
-      timestamp: '10:30 AM',
-      isFromMember: true
-    },
-    {
-      id: '2',
-      sender: 'Library Host',
-      content: 'Hello John! I can extend your loan for another week. Would that work for you?',
-      timestamp: '10:45 AM',
-      isFromMember: false
-    },
-    {
-      id: '3',
-      sender: 'John Borrower',
-      content: 'That would be perfect! Thank you so much.',
-      timestamp: '11:00 AM',
-      isFromMember: true
-    },
-    {
-      id: '4',
-      sender: 'Library Host',
-      content: 'Great! I\'ve updated your due date. You\'ll receive a confirmation email shortly.',
-      timestamp: '11:05 AM',
-      isFromMember: false
-    },
-    {
-      id: '5',
-      sender: 'John Borrower',
-      content: 'Thank you for the reminder about the due date!',
-      timestamp: '2:15 PM',
-      isFromMember: true
+  // Group messages into conversations
+  const conversationsMap = messages.reduce((acc, msg) => {
+    const otherPartyId = msg.isFromMember ? msg.senderId : msg.recipientId;
+    const otherPartyName = msg.isFromMember ? msg.senderName : (msg.recipientId === '1' ? 'Library Host' : 'Member');
+
+    if (!acc[otherPartyId]) {
+      acc[otherPartyId] = {
+        id: otherPartyId,
+        member: otherPartyName,
+        lastMessage: msg.content,
+        timestamp: msg.timestamp,
+        unread: msg.read ? 0 : (msg.isFromMember ? 1 : 0),
+        status: 'active'
+      };
+    } else {
+      acc[otherPartyId].lastMessage = msg.content;
+      acc[otherPartyId].timestamp = msg.timestamp;
+      if (!msg.read && msg.isFromMember) {
+        acc[otherPartyId].unread += 1;
+      }
     }
-  ];
+    return acc;
+  }, {} as Record<string, Conversation>);
+
+  const conversations = Object.values(conversationsMap);
+
+  const selectedMessages = messages.filter(msg =>
+    (msg.isFromMember && msg.senderId === selectedConversation) ||
+    (!msg.isFromMember && msg.recipientId === selectedConversation)
+  ).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
   const templates = [
     {
@@ -100,9 +79,14 @@ const Messages: React.FC = () => {
   ];
 
   const handleSendMessage = () => {
-    if (messageText.trim()) {
-      // In a real app, this would send the message
-      console.log('Sending message:', messageText);
+    if (messageText.trim() && selectedConversation && user) {
+      sendMessage(
+        selectedConversation,
+        messageText,
+        user.id,
+        user.fullName,
+        false
+      );
       setMessageText('');
     }
   };
@@ -238,7 +222,7 @@ const Messages: React.FC = () => {
 
               {/* Messages */}
               <div className="flex-1 overflow-y-auto py-4 space-y-4">
-                {messages.map((message) => (
+                {selectedMessages.map((message) => (
                   <div
                     key={message.id}
                     className={`flex ${message.isFromMember ? 'justify-start' : 'justify-end'}`}
@@ -254,7 +238,7 @@ const Messages: React.FC = () => {
                       <p className={`text-xs mt-1 ${
                         message.isFromMember ? 'text-gray-500' : 'text-blue-100'
                       }`}>
-                        {message.timestamp}
+                        {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
                   </div>

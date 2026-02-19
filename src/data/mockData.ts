@@ -10,6 +10,7 @@ export const mockLibraries: Library[] = [
     contactPhone: '+1 (555) 123-4567',
     logoUrl: 'https://images.pexels.com/photos/1148998/pexels-photo-1148998.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop',
     ownerId: '1',
+    status: 'active',
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z'
   }

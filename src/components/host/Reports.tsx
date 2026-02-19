@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { BarChart3, Download, Calendar, Users, Package, DollarSign } from 'lucide-react';
-import { mockItems, mockLoans, mockMembers } from '../../data/mockData';
+import { useLibrary } from '../../context/LibraryContext';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import Select from '../ui/Select';
 
 const Reports: React.FC = () => {
+  const { items, loans, members, membershipTiers } = useLibrary();
   const [selectedReport, setSelectedReport] = useState('overview');
   const [dateRange, setDateRange] = useState('30');
 
@@ -24,21 +25,31 @@ const Reports: React.FC = () => {
     { value: '365', label: 'Last year' }
   ];
 
-  // Mock data calculations
-  const totalItems = mockItems.length;
-  const activeLoans = mockLoans.filter(loan => loan.status === 'active').length;
-  const totalMembers = mockMembers.length;
-  const monthlyRevenue = 1250.75;
+  // Real data calculations
+  const totalItems = items.length;
+  const activeLoans = loans.filter(loan => loan.status === 'active').length;
+  const totalMembers = members.length;
 
-  const popularItems = mockItems
+  // Calculate revenue from membership tiers
+  const memberRevenue = members.reduce((sum, member) => {
+    const tier = membershipTiers.find(t => t.id === member.membershipTierId);
+    return sum + (tier?.price || 0);
+  }, 0);
+
+  // Calculate late fees (mocked for now but based on overdue status)
+  const overdueFees = members.reduce((sum, member) => sum + member.outstandingFees, 0);
+
+  const monthlyRevenue = memberRevenue + overdueFees;
+
+  const popularItems = items
     .map(item => ({
       ...item,
-      loanCount: Math.floor(Math.random() * 20) + 1
+      loanCount: loans.filter(l => l.itemId === item.id).length
     }))
     .sort((a, b) => b.loanCount - a.loanCount)
     .slice(0, 5);
 
-  const categoryStats = mockItems.reduce((acc, item) => {
+  const categoryStats = items.reduce((acc, item) => {
     acc[item.category] = (acc[item.category] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
@@ -153,7 +164,7 @@ const Reports: React.FC = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {mockItems.slice(0, 10).map((item) => (
+            {items.slice(0, 10).map((item) => (
               <tr key={item.id}>
                 <td className="px-4 py-2">
                   <div className="flex items-center space-x-3">
@@ -194,7 +205,9 @@ const Reports: React.FC = () => {
         </Card>
         <Card>
           <div className="text-center">
-            <div className="text-2xl font-bold text-orange-600">$2,450.00</div>
+            <div className="text-2xl font-bold text-orange-600">
+              ${items.reduce((sum, item) => sum + item.replacementValue, 0).toFixed(2)}
+            </div>
             <div className="text-sm text-gray-600">Total Asset Value</div>
           </div>
         </Card>
@@ -205,20 +218,16 @@ const Reports: React.FC = () => {
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <span className="text-gray-600">Membership Fees</span>
-            <span className="font-medium text-gray-900">$1,050.00</span>
+            <span className="font-medium text-gray-900">${memberRevenue.toFixed(2)}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-gray-600">Late Fees</span>
-            <span className="font-medium text-gray-900">$125.50</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-gray-600">Replacement Fees</span>
-            <span className="font-medium text-gray-900">$75.25</span>
+            <span className="text-gray-600">Late Fees & Outstanding</span>
+            <span className="font-medium text-gray-900">${overdueFees.toFixed(2)}</span>
           </div>
           <div className="border-t pt-2">
             <div className="flex justify-between items-center font-semibold">
-              <span className="text-gray-900">Total</span>
-              <span className="text-gray-900">${monthlyRevenue}</span>
+              <span className="text-gray-900">Total (Est. Monthly)</span>
+              <span className="text-gray-900">${monthlyRevenue.toFixed(2)}</span>
             </div>
           </div>
         </div>

@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Heart, Calendar, Star, Trash2, Share2 } from 'lucide-react';
-import { mockItems } from '../../data/mockData';
+import { useLibrary } from '../../context/LibraryContext';
+import { useAuth } from '../../context/AuthContext';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import Badge from '../ui/Badge';
 
 const Favorites: React.FC = () => {
-  // Mock favorite items (in a real app, this would come from user preferences)
-  const [favoriteItems] = useState(mockItems.slice(0, 4));
+  const { items, favorites, toggleFavorite, reserveItem } = useLibrary();
+  const { user } = useAuth();
+
+  const favoriteItems = items.filter(item => favorites.includes(item.id));
 
   const getConditionColor = (condition: string) => {
     switch (condition) {
@@ -114,7 +117,10 @@ const Favorites: React.FC = () => {
                     alt={item.name}
                     className="w-full h-48 object-cover rounded-lg"
                   />
-                  <button className="absolute top-3 right-3 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors">
+                  <button
+                    onClick={() => toggleFavorite(item.id)}
+                    className="absolute top-3 right-3 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                  >
                     <Heart className="w-4 h-4 fill-current" />
                   </button>
                   <div className="absolute top-3 left-3">
@@ -155,7 +161,7 @@ const Favorites: React.FC = () => {
                   
                   <div className="flex space-x-2 pt-2">
                     {item.status === 'available' ? (
-                      <Button className="flex-1">
+                      <Button className="flex-1" onClick={() => user && reserveItem(item.id, user.id)}>
                         <Calendar className="w-4 h-4 mr-2" />
                         Reserve
                       </Button>
@@ -164,7 +170,7 @@ const Favorites: React.FC = () => {
                         Not Available
                       </Button>
                     )}
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => toggleFavorite(item.id)}>
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
@@ -183,7 +189,7 @@ const Favorites: React.FC = () => {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {mockItems.slice(4, 7).map((item) => (
+          {items.slice(4, 7).map((item) => (
             <div key={item.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
               <img
                 src={item.imageUrls[0]}
@@ -194,8 +200,8 @@ const Favorites: React.FC = () => {
                 <h3 className="text-sm font-medium text-gray-900 truncate">{item.name}</h3>
                 <p className="text-xs text-gray-600">{item.category}</p>
               </div>
-              <Button variant="ghost" size="sm">
-                <Heart className="w-4 h-4" />
+              <Button variant="ghost" size="sm" onClick={() => toggleFavorite(item.id)}>
+                <Heart className={`w-4 h-4 ${favorites.includes(item.id) ? 'fill-current text-red-500' : ''}`} />
               </Button>
             </div>
           ))}

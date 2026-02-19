@@ -4,6 +4,7 @@ export interface User {
   fullName: string;
   phone?: string;
   role: 'host' | 'borrower' | 'super-user';
+  status: 'active' | 'suspended';
   libraryId?: string;
   membershipTierId?: string;
   createdAt: string;
@@ -19,6 +20,7 @@ export interface Library {
   contactPhone: string;
   logoUrl?: string;
   ownerId: string;
+  status: 'active' | 'pending' | 'suspended';
   createdAt: string;
   updatedAt: string;
 }
@@ -99,4 +101,30 @@ export interface AuthState {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+}
+
+export interface Message {
+  id: string;
+  senderId: string;
+  senderName: string;
+  recipientId: string;
+  content: string;
+  timestamp: string;
+  read: boolean;
+  isFromMember: boolean;
+}
+
+export interface LibrarySettings {
+  name: string;
+  description: string;
+  address: string;
+  contactEmail: string;
+  contactPhone: string;
+  website: string;
+  hours: string;
+  maxLoanDuration: number;
+  maxRenewals: number;
+  lateFeePerDay: number;
+  reservationHoldDays: number;
+  membershipRequired: boolean;
 }

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Search, Filter, CheckCircle, AlertTriangle, MoreHorizontal, Mail } from 'lucide-react';
 import { useLibrary } from '../../context/LibraryContext';
+import { useAuth } from '../../context/AuthContext';
 import { Loan, Item } from '../../types';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
@@ -10,7 +11,8 @@ import Select from '../ui/Select';
 import Modal from '../ui/Modal';
 
 const LoanManagement: React.FC = () => {
-  const { loans, items, returnItem, members } = useLibrary();
+  const { loans, items, returnItem } = useLibrary();
+  const { allUsers } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
@@ -22,14 +24,14 @@ const LoanManagement: React.FC = () => {
   const getLoansWithDetails = () => {
     return loans.map(loan => {
       const item = items.find(item => item.id === loan.itemId);
-      const member = members.find(m => m.userId === loan.borrowerId);
+      const user = allUsers.find(u => u.id === loan.borrowerId);
       const borrower = {
         id: loan.borrowerId,
-        name: member?.userId === '2' ? 'John Borrower' : 'Library Member',
-        email: member?.userId === '2' ? 'john@example.com' : 'member@example.com'
+        name: user?.fullName || 'Unknown Member',
+        email: user?.email || 'No email'
       };
       return { ...loan, item, borrower };
-    }).filter(loan => loan.item && loan.borrower);
+    }).filter(loan => loan.item);
   };
 
   const loansWithDetails = getLoansWithDetails();

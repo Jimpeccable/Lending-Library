@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Search, Filter, MoreHorizontal, Mail, UserCheck, CreditCard } from 'lucide-react';
 import { useLibrary } from '../../context/LibraryContext';
+import { useAuth } from '../../context/AuthContext';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import Badge from '../ui/Badge';
@@ -9,6 +10,7 @@ import Select from '../ui/Select';
 
 const MemberManagement: React.FC = () => {
   const { members, membershipTiers } = useLibrary();
+  const { allUsers } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [tierFilter, setTierFilter] = useState('');
@@ -153,21 +155,24 @@ const MemberManagement: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredMembers.map((member) => (
+              {filteredMembers.map((member) => {
+                const user = allUsers.find(u => u.id === member.userId);
+
+                return (
                 <tr key={member.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-medium text-gray-600">
-                          JD
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span className="text-sm font-medium text-blue-600">
+                          {user?.fullName.charAt(0).toUpperCase() || 'M'}
                         </span>
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">
-                          John Borrower
+                          {user?.fullName || 'Unknown Member'}
                         </div>
                         <div className="text-sm text-gray-500">
-                          john@example.com
+                          {user?.email || 'No email'}
                         </div>
                       </div>
                     </div>
@@ -212,7 +217,8 @@ const MemberManagement: React.FC = () => {
                     </div>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>

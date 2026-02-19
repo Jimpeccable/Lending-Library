@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Item, Member, Loan, Reservation, Library, MembershipTier } from '../types';
+import { Item, Member, Loan, Reservation, Library, MembershipTier, Message, LibrarySettings } from '../types';
 import { mockItems, mockMembers, mockLoans, mockReservations, mockLibraries, mockMembershipTiers } from '../data/mockData';
 import { useToast } from './ToastContext';
 
@@ -10,14 +10,23 @@ interface LibraryContextType {
   reservations: Reservation[];
   libraries: Library[];
   membershipTiers: MembershipTier[];
+  messages: Message[];
+  librarySettings: LibrarySettings;
+  favorites: string[];
 
   addItem: (item: Omit<Item, 'id' | 'createdAt' | 'updatedAt'>) => void;
   updateItem: (id: string, item: Partial<Item>) => void;
   deleteItem: (id: string) => void;
-  checkoutItem: (itemId: string, memberId: string, dueDate: string) => void;
+  checkoutItem: (itemId: string, borrowerId: string, dueDate: string) => void;
   returnItem: (loanId: string, condition: Item['condition'], notes?: string) => void;
   reserveItem: (itemId: string, userId: string) => void;
   cancelReservation: (reservationId: string) => void;
+  toggleFavorite: (itemId: string) => void;
+  sendMessage: (recipientId: string, content: string, senderId: string, senderName: string, isFromMember: boolean) => void;
+  updateSettings: (settings: Partial<LibrarySettings>) => void;
+  approveLibrary: (libraryId: string) => void;
+  suspendLibrary: (libraryId: string) => void;
+  updateLibrary: (libraryId: string, updates: Partial<Library>) => void;
 }
 
 const LibraryContext = createContext<LibraryContextType | undefined>(undefined);
@@ -28,7 +37,23 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [members, setMembers] = useState<Member[]>([]);
   const [loans, setLoans] = useState<Loan[]>([]);
   const [reservations, setReservations] = useState<Reservation[]>([]);
-  const [libraries] = useState<Library[]>(mockLibraries);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [librarySettings, setLibrarySettings] = useState<LibrarySettings>({
+    name: 'Sunshine Community Toy Library',
+    description: 'A vibrant community toy library serving families in the Sunshine district.',
+    address: '123 Rainbow Street, Sunshine, CA 90210',
+    contactEmail: 'hello@sunshinetoys.com',
+    contactPhone: '+1 (555) 123-4567',
+    website: 'https://sunshinetoys.com',
+    hours: 'Mon-Fri: 9AM-6PM, Sat: 10AM-4PM',
+    maxLoanDuration: 14,
+    maxRenewals: 2,
+    lateFeePerDay: 1.0,
+    reservationHoldDays: 3,
+    membershipRequired: true
+  });
+  const [libraries, setLibraries] = useState<Library[]>([]);
   const [membershipTiers] = useState<MembershipTier[]>(mockMembershipTiers);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -38,6 +63,10 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const storedMembers = localStorage.getItem('library_members');
     const storedLoans = localStorage.getItem('library_loans');
     const storedReservations = localStorage.getItem('library_reservations');
+    const storedFavorites = localStorage.getItem('library_favorites');
+    const storedMessages = localStorage.getItem('library_messages');
+    const storedSettings = localStorage.getItem('library_settings');
+    const storedLibraries = localStorage.getItem('library_list');
 
     if (storedItems) setItems(JSON.parse(storedItems));
     else setItems(mockItems);
@@ -51,6 +80,50 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
     if (storedReservations) setReservations(JSON.parse(storedReservations));
     else setReservations(mockReservations);
 
+    if (storedFavorites) setFavorites(JSON.parse(storedFavorites));
+
+    if (storedMessages) setMessages(JSON.parse(storedMessages));
+    else {
+      // Default mock messages
+      setMessages([
+        {
+          id: 'msg-1',
+          senderId: '2',
+          senderName: 'John Borrower',
+          recipientId: '1',
+          content: 'Hi! I wanted to ask about extending my loan for the LEGO set.',
+          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(),
+          read: true,
+          isFromMember: true
+        },
+        {
+          id: 'msg-2',
+          senderId: '1',
+          senderName: 'Library Host',
+          recipientId: '2',
+          content: 'Hello John! I can extend your loan for another week. Would that work for you?',
+          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3.8).toISOString(),
+          read: true,
+          isFromMember: false
+        },
+        {
+          id: 'msg-3',
+          senderId: '2',
+          senderName: 'John Borrower',
+          recipientId: '1',
+          content: 'Thank you for the reminder about the due date!',
+          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+          read: false,
+          isFromMember: true
+        }
+      ]);
+    }
+
+    if (storedSettings) setLibrarySettings(JSON.parse(storedSettings));
+
+    if (storedLibraries) setLibraries(JSON.parse(storedLibraries));
+    else setLibraries(mockLibraries);
+
     setIsLoaded(true);
   }, []);
 
@@ -61,8 +134,12 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
       localStorage.setItem('library_members', JSON.stringify(members));
       localStorage.setItem('library_loans', JSON.stringify(loans));
       localStorage.setItem('library_reservations', JSON.stringify(reservations));
+      localStorage.setItem('library_favorites', JSON.stringify(favorites));
+      localStorage.setItem('library_messages', JSON.stringify(messages));
+      localStorage.setItem('library_settings', JSON.stringify(librarySettings));
+      localStorage.setItem('library_list', JSON.stringify(libraries));
     }
-  }, [items, members, loans, reservations, isLoaded]);
+  }, [items, members, loans, reservations, favorites, messages, librarySettings, libraries, isLoaded]);
 
   const addItem = (itemData: Omit<Item, 'id' | 'createdAt' | 'updatedAt'>) => {
     const newItem: Item = {
@@ -176,10 +253,64 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
     showToast(`Reservation cancelled`, 'info');
   };
 
+  const toggleFavorite = (itemId: string) => {
+    setFavorites(prev => {
+      if (prev.includes(itemId)) {
+        showToast('Removed from favorites', 'info');
+        return prev.filter(id => id !== itemId);
+      } else {
+        showToast('Added to favorites', 'success');
+        return [...prev, itemId];
+      }
+    });
+  };
+
+  const sendMessage = (recipientId: string, content: string, senderId: string, senderName: string, isFromMember: boolean) => {
+    const newMessage: Message = {
+      id: `msg-${Date.now()}`,
+      senderId,
+      senderName,
+      recipientId,
+      content,
+      timestamp: new Date().toISOString(),
+      read: false,
+      isFromMember
+    };
+    setMessages(prev => [...prev, newMessage]);
+    showToast('Message sent', 'success');
+  };
+
+  const updateSettings = (settings: Partial<LibrarySettings>) => {
+    setLibrarySettings(prev => ({ ...prev, ...settings }));
+    showToast('Settings updated', 'success');
+  };
+
+  const approveLibrary = (libraryId: string) => {
+    setLibraries(prev => prev.map(lib =>
+      lib.id === libraryId ? { ...lib, status: 'active', updatedAt: new Date().toISOString() } : lib
+    ));
+    showToast('Library approved', 'success');
+  };
+
+  const suspendLibrary = (libraryId: string) => {
+    setLibraries(prev => prev.map(lib =>
+      lib.id === libraryId ? { ...lib, status: 'suspended', updatedAt: new Date().toISOString() } : lib
+    ));
+    showToast('Library suspended', 'warning');
+  };
+
+  const updateLibrary = (libraryId: string, updates: Partial<Library>) => {
+    setLibraries(prev => prev.map(lib =>
+      lib.id === libraryId ? { ...lib, ...updates, updatedAt: new Date().toISOString() } : lib
+    ));
+    showToast('Library updated', 'success');
+  };
+
   return (
     <LibraryContext.Provider value={{
-      items, members, loans, reservations, libraries, membershipTiers,
-      addItem, updateItem, deleteItem, checkoutItem, returnItem, reserveItem, cancelReservation
+      items, members, loans, reservations, libraries, membershipTiers, favorites, messages, librarySettings,
+      addItem, updateItem, deleteItem, checkoutItem, returnItem, reserveItem, cancelReservation, toggleFavorite,
+      sendMessage, updateSettings, approveLibrary, suspendLibrary, updateLibrary
     }}>
       {children}
     </LibraryContext.Provider>

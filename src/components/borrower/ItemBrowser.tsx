@@ -9,12 +9,11 @@ import Input from '../ui/Input';
 import Select from '../ui/Select';
 
 const ItemBrowser: React.FC = () => {
-  const { items, reserveItem } = useLibrary();
+  const { items, reserveItem, favorites, toggleFavorite } = useLibrary();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [ageFilter, setAgeFilter] = useState('');
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
   const categories = [...new Set(items.map(item => item.category))];
   const ageGroups = [...new Set(items.map(item => item.ageRecommendation))];
@@ -28,15 +27,6 @@ const ItemBrowser: React.FC = () => {
     return matchesSearch && matchesCategory && matchesAge;
   });
 
-  const toggleFavorite = (itemId: string) => {
-    const newFavorites = new Set(favorites);
-    if (newFavorites.has(itemId)) {
-      newFavorites.delete(itemId);
-    } else {
-      newFavorites.add(itemId);
-    }
-    setFavorites(newFavorites);
-  };
 
   const getConditionColor = (condition: string) => {
     switch (condition) {
@@ -117,7 +107,7 @@ const ItemBrowser: React.FC = () => {
         <Card>
           <div className="text-center">
             <div className="text-2xl font-bold text-green-600">
-              {favorites.size}
+              {favorites.length}
             </div>
             <div className="text-sm text-gray-600">Favorites</div>
           </div>
@@ -163,12 +153,12 @@ const ItemBrowser: React.FC = () => {
               <button
                 onClick={() => toggleFavorite(item.id)}
                 className={`absolute top-3 right-3 p-2 rounded-full transition-colors ${
-                  favorites.has(item.id)
+                  favorites.includes(item.id)
                     ? 'bg-red-500 text-white'
                     : 'bg-white text-gray-400 hover:text-red-500'
                 }`}
               >
-                <Heart className={`w-4 h-4 ${favorites.has(item.id) ? 'fill-current' : ''}`} />
+                <Heart className={`w-4 h-4 ${favorites.includes(item.id) ? 'fill-current' : ''}`} />
               </button>
             </div>
             

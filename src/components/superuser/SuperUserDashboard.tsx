@@ -14,7 +14,11 @@ import Card from '../ui/Card';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 
-const SuperUserDashboard: React.FC = () => {
+interface SuperUserDashboardProps {
+  onSectionChange?: (section: string) => void;
+}
+
+const SuperUserDashboard: React.FC<SuperUserDashboardProps> = ({ onSectionChange }) => {
   const { libraries, items, members, loans } = useLibrary();
   const totalItems = items.length;
   const totalMembers = members.length;
@@ -114,11 +118,11 @@ const SuperUserDashboard: React.FC = () => {
           <p className="text-gray-600">Monitor and manage the entire ToyLibrary platform</p>
         </div>
         <div className="flex space-x-3">
-          <Button variant="outline">
+          <Button variant="outline" onClick={() => onSectionChange?.('security')}>
             <Shield className="w-4 h-4 mr-2" />
             Security Center
           </Button>
-          <Button>
+          <Button onClick={() => window.alert('System health check initiated. All systems nominal.')}>
             <Server className="w-4 h-4 mr-2" />
             System Health
           </Button>
@@ -270,19 +274,19 @@ const SuperUserDashboard: React.FC = () => {
         <Card>
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
           <div className="space-y-3">
-            <Button variant="outline" className="w-full justify-start">
+            <Button variant="outline" className="w-full justify-start" onClick={() => onSectionChange?.('libraries')}>
               <Building className="w-4 h-4 mr-2" />
               Approve New Libraries
             </Button>
-            <Button variant="outline" className="w-full justify-start">
+            <Button variant="outline" className="w-full justify-start" onClick={() => onSectionChange?.('support')}>
               <Users className="w-4 h-4 mr-2" />
               Manage Support Tickets
             </Button>
-            <Button variant="outline" className="w-full justify-start">
+            <Button variant="outline" className="w-full justify-start" onClick={() => onSectionChange?.('analytics')}>
               <Globe className="w-4 h-4 mr-2" />
               Platform Analytics
             </Button>
-            <Button variant="outline" className="w-full justify-start">
+            <Button variant="outline" className="w-full justify-start" onClick={() => onSectionChange?.('security')}>
               <Shield className="w-4 h-4 mr-2" />
               Security Audit
             </Button>

@@ -1,21 +1,15 @@
 import React, { useState } from 'react';
 import { Save, Upload, Bell, CreditCard, Users, Shield, Globe } from 'lucide-react';
+import { useLibrary } from '../../context/LibraryContext';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
 
 const Settings: React.FC = () => {
+  const { librarySettings, updateSettings } = useLibrary();
   const [activeTab, setActiveTab] = useState('general');
-  const [librarySettings, setLibrarySettings] = useState({
-    name: 'Sunshine Community Toy Library',
-    description: 'A vibrant community toy library serving families in the Sunshine district.',
-    address: '123 Rainbow Street, Sunshine, CA 90210',
-    contactEmail: 'hello@sunshinetoys.com',
-    contactPhone: '+1 (555) 123-4567',
-    website: 'https://sunshinetoys.com',
-    hours: 'Mon-Fri: 9AM-6PM, Sat: 10AM-4PM'
-  });
+  const [localSettings, setLocalSettings] = useState(librarySettings);
 
   const [notificationSettings, setNotificationSettings] = useState({
     emailReminders: true,
@@ -24,15 +18,6 @@ const Settings: React.FC = () => {
     reservationAlerts: true,
     paymentReminders: true,
     membershipExpiry: true
-  });
-
-  const [policySettings, setPolicySettings] = useState({
-    maxLoanDuration: '14',
-    maxRenewals: '2',
-    lateFeePerDay: '1.00',
-    replacementFeePolicy: 'full_value',
-    reservationHoldDays: '3',
-    membershipRequired: true
   });
 
   const tabs = [
@@ -44,8 +29,7 @@ const Settings: React.FC = () => {
   ];
 
   const handleSaveSettings = () => {
-    // In a real app, this would save to the database
-    console.log('Saving settings for tab:', activeTab);
+    updateSettings(localSettings);
   };
 
   const renderGeneralSettings = () => (
@@ -56,46 +40,46 @@ const Settings: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               label="Library Name"
-              value={librarySettings.name}
-              onChange={(e) => setLibrarySettings({ ...librarySettings, name: e.target.value })}
+              value={localSettings.name}
+              onChange={(e) => setLocalSettings({ ...localSettings, name: e.target.value })}
             />
             <Input
               label="Website"
-              value={librarySettings.website}
-              onChange={(e) => setLibrarySettings({ ...librarySettings, website: e.target.value })}
+              value={localSettings.website}
+              onChange={(e) => setLocalSettings({ ...localSettings, website: e.target.value })}
             />
           </div>
           
           <Input
             label="Description"
-            value={librarySettings.description}
-            onChange={(e) => setLibrarySettings({ ...librarySettings, description: e.target.value })}
+            value={localSettings.description}
+            onChange={(e) => setLocalSettings({ ...localSettings, description: e.target.value })}
           />
           
           <Input
             label="Address"
-            value={librarySettings.address}
-            onChange={(e) => setLibrarySettings({ ...librarySettings, address: e.target.value })}
+            value={localSettings.address}
+            onChange={(e) => setLocalSettings({ ...localSettings, address: e.target.value })}
           />
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               label="Contact Email"
               type="email"
-              value={librarySettings.contactEmail}
-              onChange={(e) => setLibrarySettings({ ...librarySettings, contactEmail: e.target.value })}
+              value={localSettings.contactEmail}
+              onChange={(e) => setLocalSettings({ ...localSettings, contactEmail: e.target.value })}
             />
             <Input
               label="Contact Phone"
-              value={librarySettings.contactPhone}
-              onChange={(e) => setLibrarySettings({ ...librarySettings, contactPhone: e.target.value })}
+              value={localSettings.contactPhone}
+              onChange={(e) => setLocalSettings({ ...localSettings, contactPhone: e.target.value })}
             />
           </div>
           
           <Input
             label="Operating Hours"
-            value={librarySettings.hours}
-            onChange={(e) => setLibrarySettings({ ...librarySettings, hours: e.target.value })}
+            value={localSettings.hours}
+            onChange={(e) => setLocalSettings({ ...localSettings, hours: e.target.value })}
           />
         </div>
       </Card>
@@ -190,14 +174,14 @@ const Settings: React.FC = () => {
           <Input
             label="Default Loan Duration (days)"
             type="number"
-            value={policySettings.maxLoanDuration}
-            onChange={(e) => setPolicySettings({ ...policySettings, maxLoanDuration: e.target.value })}
+            value={localSettings.maxLoanDuration}
+            onChange={(e) => setLocalSettings({ ...localSettings, maxLoanDuration: parseInt(e.target.value) })}
           />
           <Input
             label="Maximum Renewals"
             type="number"
-            value={policySettings.maxRenewals}
-            onChange={(e) => setPolicySettings({ ...policySettings, maxRenewals: e.target.value })}
+            value={localSettings.maxRenewals}
+            onChange={(e) => setLocalSettings({ ...localSettings, maxRenewals: parseInt(e.target.value) })}
           />
         </div>
         
@@ -206,21 +190,20 @@ const Settings: React.FC = () => {
             label="Late Fee per Day ($)"
             type="number"
             step="0.01"
-            value={policySettings.lateFeePerDay}
-            onChange={(e) => setPolicySettings({ ...policySettings, lateFeePerDay: e.target.value })}
+            value={localSettings.lateFeePerDay}
+            onChange={(e) => setLocalSettings({ ...localSettings, lateFeePerDay: parseFloat(e.target.value) })}
           />
           <Input
             label="Reservation Hold Period (days)"
             type="number"
-            value={policySettings.reservationHoldDays}
-            onChange={(e) => setPolicySettings({ ...policySettings, reservationHoldDays: e.target.value })}
+            value={localSettings.reservationHoldDays}
+            onChange={(e) => setLocalSettings({ ...localSettings, reservationHoldDays: parseInt(e.target.value) })}
           />
         </div>
         
         <Select
           label="Replacement Fee Policy"
-          value={policySettings.replacementFeePolicy}
-          onChange={(e) => setPolicySettings({ ...policySettings, replacementFeePolicy: e.target.value })}
+          value="full_value"
           options={[
             { value: 'full_value', label: 'Full Replacement Value' },
             { value: 'depreciated', label: 'Depreciated Value' },
@@ -240,9 +223,9 @@ const Settings: React.FC = () => {
           <label className="relative inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
-              checked={policySettings.membershipRequired}
-              onChange={(e) => setPolicySettings({ 
-                ...policySettings, 
+              checked={localSettings.membershipRequired}
+              onChange={(e) => setLocalSettings({
+                ...localSettings,
                 membershipRequired: e.target.checked 
               })}
               className="sr-only peer"

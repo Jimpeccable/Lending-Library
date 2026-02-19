@@ -21,6 +21,11 @@ import Favorites from './components/borrower/Favorites';
 import { Reservations } from './components/borrower/Reservations';
 import Profile from './components/borrower/Profile';
 import SuperUserDashboard from './components/superuser/SuperUserDashboard';
+import LibraryManagement from './components/superuser/LibraryManagement';
+import UserManagement from './components/superuser/UserManagement';
+import Analytics from './components/superuser/Analytics';
+import SecuritySettings from './components/superuser/SecuritySettings';
+import SupportTickets from './components/superuser/SupportTickets';
 import { Package } from 'lucide-react';
 
 const AuthScreen: React.FC = () => {
@@ -111,7 +116,22 @@ const MainApp: React.FC = () => {
           return <BorrowerDashboard />;
       }
     } else if (user.role === 'super-user') {
-      return <SuperUserDashboard />;
+      switch (activeSection) {
+        case 'dashboard':
+          return <SuperUserDashboard onSectionChange={setActiveSection} />;
+        case 'libraries':
+          return <LibraryManagement />;
+        case 'users':
+          return <UserManagement />;
+        case 'analytics':
+          return <Analytics />;
+        case 'security':
+          return <SecuritySettings />;
+        case 'support':
+          return <SupportTickets />;
+        default:
+          return <SuperUserDashboard />;
+      }
     }
     
     return <div>Unknown user role</div>;

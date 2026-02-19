@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { DollarSign, CreditCard, AlertCircle, TrendingUp, Download, Plus } from 'lucide-react';
-import { mockMembers, mockMembershipTiers } from '../../data/mockData';
+import { useLibrary } from '../../context/LibraryContext';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import Badge from '../ui/Badge';
@@ -9,7 +9,7 @@ import Select from '../ui/Select';
 import Modal from '../ui/Modal';
 
 const Financials: React.FC = () => {
-  const [membershipTiers] = useState(mockMembershipTiers);
+  const { items, members, membershipTiers } = useLibrary();
   const [isAddTierModalOpen, setIsAddTierModalOpen] = useState(false);
   const [newTier, setNewTier] = useState({
     name: '',
@@ -21,13 +21,20 @@ const Financials: React.FC = () => {
     benefits: ''
   });
 
-  // Mock financial data
+  // Real financial data
+  const totalAssetValue = items.reduce((sum, item) => sum + item.replacementValue, 0);
+  const outstandingFees = members.reduce((sum, member) => sum + member.outstandingFees, 0);
+  const membershipRevenue = members.reduce((sum, member) => {
+    const tier = membershipTiers.find(t => t.id === member.membershipTierId);
+    return sum + (tier?.price || 0);
+  }, 0);
+
   const financialStats = {
-    monthlyRevenue: 1250.75,
-    outstandingFees: 125.50,
-    totalAssetValue: 2450.00,
-    membershipRevenue: 1050.00,
-    feeRevenue: 200.75
+    monthlyRevenue: membershipRevenue + (outstandingFees * 0.1), // Just an estimate
+    outstandingFees: outstandingFees,
+    totalAssetValue: totalAssetValue,
+    membershipRevenue: membershipRevenue,
+    feeRevenue: outstandingFees * 0.1
   };
 
   const recentTransactions = [
@@ -160,7 +167,7 @@ const Financials: React.FC = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Active Members</p>
-              <p className="text-2xl font-bold text-gray-900">{mockMembers.length}</p>
+              <p className="text-2xl font-bold text-gray-900">{members.length}</p>
             </div>
           </div>
         </Card>

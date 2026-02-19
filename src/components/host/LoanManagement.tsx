@@ -16,10 +16,12 @@ const LoanManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
+  const [isQuickReturnModalOpen, setIsQuickReturnModalOpen] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
   const [returnCondition, setReturnCondition] = useState('');
   const [returnNotes, setReturnNotes] = useState('');
   const [lateFee, setLateFee] = useState(0);
+  const [barcodeSearch, setBarcodeSearch] = useState('');
 
   const getLoansWithDetails = () => {
     return loans.map(loan => {
@@ -84,6 +86,34 @@ const LoanManagement: React.FC = () => {
 
   const statuses = ['active', 'overdue', 'returned', 'lost'];
 
+  const handleQuickReturn = () => {
+    const item = items.find(i => i.barcode === barcodeSearch);
+    if (!item) {
+      alert('Item not found');
+      return;
+    }
+
+    const loan = loans.find(l => l.itemId === item.id && l.status === 'active');
+    if (!loan) {
+      alert('No active loan found for this item');
+      return;
+    }
+
+    const loanWithDetails = {
+      ...loan,
+      item,
+      borrower: {
+        id: loan.borrowerId,
+        name: allUsers.find(u => u.id === loan.borrowerId)?.fullName || 'Unknown Member',
+        email: allUsers.find(u => u.id === loan.borrowerId)?.email || 'No email'
+      }
+    };
+
+    setIsQuickReturnModalOpen(false);
+    setBarcodeSearch('');
+    handleReturnItem(loanWithDetails);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -92,7 +122,7 @@ const LoanManagement: React.FC = () => {
           <h1 className="text-2xl font-bold text-gray-900">Loan Management</h1>
           <p className="text-gray-600">Track and manage all library loans</p>
         </div>
-        <Button>
+        <Button onClick={() => setIsQuickReturnModalOpen(true)}>
           <CheckCircle className="w-4 h-4 mr-2" />
           Quick Return
         </Button>
@@ -332,6 +362,39 @@ const LoanManagement: React.FC = () => {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Quick Return Modal */}
+      <Modal
+        isOpen={isQuickReturnModalOpen}
+        onClose={() => {
+          setIsQuickReturnModalOpen(false);
+          setBarcodeSearch('');
+        }}
+        title="Quick Return"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            Scan or enter the item barcode to quickly process a return.
+          </p>
+          <Input
+            label="Barcode"
+            placeholder="TOY001234567"
+            value={barcodeSearch}
+            onChange={(e) => setBarcodeSearch(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleQuickReturn()}
+            autoFocus
+          />
+          <div className="flex justify-end space-x-3">
+            <Button variant="outline" onClick={() => setIsQuickReturnModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleQuickReturn} disabled={!barcodeSearch}>
+              Find Loan
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

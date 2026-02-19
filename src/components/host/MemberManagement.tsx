@@ -8,15 +8,26 @@ import Badge from '../ui/Badge';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
 
+import Modal from '../ui/Modal';
+
 const MemberManagement: React.FC = () => {
-  const { members, membershipTiers } = useLibrary();
+  const { members, membershipTiers, addMember, updateMemberStatus } = useLibrary();
   const { allUsers } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [tierFilter, setTierFilter] = useState('');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newMember, setNewMember] = useState({
+    userId: '',
+    membershipTierId: '',
+    status: 'active' as const
+  });
 
   const filteredMembers = members.filter(member => {
-    const matchesSearch = true; // In real app, would search by name/email
+    const user = allUsers.find(u => u.id === member.userId);
+    const matchesSearch = !searchTerm ||
+                         user?.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         user?.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = !statusFilter || member.status === statusFilter;
     const matchesTier = !tierFilter || member.membershipTierId === tierFilter;
     
@@ -43,6 +54,21 @@ const MemberManagement: React.FC = () => {
 
   const statuses = ['active', 'suspended', 'pending'];
 
+  const handleAddMember = () => {
+    addMember({
+      libraryId: 'lib1',
+      userId: newMember.userId,
+      membershipTierId: newMember.membershipTierId,
+      status: newMember.status
+    });
+    setIsAddModalOpen(false);
+    setNewMember({ userId: '', membershipTierId: '', status: 'active' });
+  };
+
+  const availableUsers = allUsers.filter(user =>
+    user.role === 'borrower' && !members.some(m => m.userId === user.id)
+  );
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -51,7 +77,7 @@ const MemberManagement: React.FC = () => {
           <h1 className="text-2xl font-bold text-gray-900">Member Management</h1>
           <p className="text-gray-600">Manage your library members and memberships</p>
         </div>
-        <Button>
+        <Button onClick={() => setIsAddModalOpen(true)}>
           <UserCheck className="w-4 h-4 mr-2" />
           Add Member
         </Button>
@@ -205,14 +231,30 @@ const MemberManagement: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center justify-end space-x-2">
+                      {member.status === 'active' ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          title="Suspend Member"
+                          onClick={() => updateMemberStatus(member.id, 'suspended')}
+                        >
+                          <MoreHorizontal className="w-4 h-4 text-red-600" />
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          title="Activate Member"
+                          onClick={() => updateMemberStatus(member.id, 'active')}
+                        >
+                          <UserCheck className="w-4 h-4 text-green-600" />
+                        </Button>
+                      )}
                       <Button variant="ghost" size="sm">
                         <Mail className="w-4 h-4" />
                       </Button>
                       <Button variant="ghost" size="sm">
                         <CreditCard className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="w-4 h-4" />
                       </Button>
                     </div>
                   </td>
@@ -223,6 +265,62 @@ const MemberManagement: React.FC = () => {
           </table>
         </div>
       </Card>
+
+      {/* Add Member Modal */}
+      <Modal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        title="Add New Member"
+        size="md"
+      >
+        <div className="space-y-4">
+          <Select
+            label="Select User"
+            value={newMember.userId}
+            onChange={(e) => setNewMember({ ...newMember, userId: e.target.value })}
+            options={availableUsers.map(user => ({
+              value: user.id,
+              label: `${user.fullName} (${user.email})`
+            }))}
+            placeholder="Choose a registered borrower"
+            required
+          />
+
+          <Select
+            label="Membership Tier"
+            value={newMember.membershipTierId}
+            onChange={(e) => setNewMember({ ...newMember, membershipTierId: e.target.value })}
+            options={membershipTiers.map(tier => ({
+              value: tier.id,
+              label: `${tier.name} - $${tier.price}/${tier.billingInterval === 'monthly' ? 'mo' : 'yr'}`
+            }))}
+            placeholder="Select a tier"
+            required
+          />
+
+          <Select
+            label="Initial Status"
+            value={newMember.status}
+            onChange={(e) => setNewMember({ ...newMember, status: e.target.value as 'active' | 'suspended' | 'pending' })}
+            options={[
+              { value: 'active', label: 'Active' },
+              { value: 'pending', label: 'Pending' }
+            ]}
+          />
+
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleAddMember}
+              disabled={!newMember.userId || !newMember.membershipTierId}
+            >
+              Add Member
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

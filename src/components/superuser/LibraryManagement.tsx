@@ -4,9 +4,84 @@ import { useLibrary } from '../../context/LibraryContext';
 import Card from '../ui/Card';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
+import Modal from '../ui/Modal';
+import Input from '../ui/Input';
+import { useState } from 'react';
+import { Library } from '../../types';
 
 const LibraryManagement: React.FC = () => {
-  const { libraries, approveLibrary, suspendLibrary } = useLibrary();
+  const { libraries, approveLibrary, suspendLibrary, updateLibrary, addLibrary } = useLibrary();
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedLibrary, setSelectedLibrary] = useState<Library | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const [libData, setLibData] = useState({
+    name: '',
+    description: '',
+    address: '',
+    contactEmail: '',
+    contactPhone: '',
+    ownerId: ''
+  });
+
+  const filteredLibraries = libraries.filter(lib =>
+    lib.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    lib.contactEmail.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleAddLibrary = () => {
+    addLibrary({
+      name: libData.name,
+      description: libData.description,
+      address: libData.address,
+      contactEmail: libData.contactEmail,
+      contactPhone: libData.contactPhone,
+      status: 'pending',
+      ownerId: libData.ownerId || '1' // Default to system user or first user
+    });
+    setIsAddModalOpen(false);
+    resetLibData();
+  };
+
+  const handleEditLibrary = () => {
+    if (!selectedLibrary) return;
+    updateLibrary(selectedLibrary.id, {
+      name: libData.name,
+      description: libData.description,
+      address: libData.address,
+      contactEmail: libData.contactEmail,
+      contactPhone: libData.contactPhone,
+      ownerId: libData.ownerId
+    });
+    setIsEditModalOpen(false);
+    setSelectedLibrary(null);
+    resetLibData();
+  };
+
+  const resetLibData = () => {
+    setLibData({
+      name: '',
+      description: '',
+      address: '',
+      contactEmail: '',
+      contactPhone: '',
+      ownerId: ''
+    });
+  };
+
+  const openEditModal = (lib: Library) => {
+    setSelectedLibrary(lib);
+    setLibData({
+      name: lib.name,
+      description: lib.description,
+      address: lib.address,
+      contactEmail: lib.contactEmail,
+      contactPhone: lib.contactPhone,
+      ownerId: lib.ownerId
+    });
+    setIsEditModalOpen(true);
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -28,7 +103,7 @@ const LibraryManagement: React.FC = () => {
           <h1 className="text-2xl font-bold text-gray-900">Library Management</h1>
           <p className="text-gray-600">Manage and moderate all toy libraries on the platform</p>
         </div>
-        <Button>
+        <Button onClick={() => setIsAddModalOpen(true)}>
           <Building className="w-4 h-4 mr-2" />
           Add New Library
         </Button>
@@ -41,6 +116,8 @@ const LibraryManagement: React.FC = () => {
             <input
               type="text"
               placeholder="Search libraries..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm"
             />
           </div>
@@ -64,7 +141,7 @@ const LibraryManagement: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {libraries.map((library) => (
+              {filteredLibraries.map((library) => (
                 <tr key={library.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center">
@@ -111,7 +188,10 @@ const LibraryManagement: React.FC = () => {
                           <XCircle className="w-5 h-5" />
                         </button>
                       )}
-                      <button className="p-1 text-gray-400 hover:bg-gray-50 rounded">
+                      <button
+                        onClick={() => openEditModal(library)}
+                        className="p-1 text-gray-400 hover:bg-gray-50 rounded"
+                      >
                         <MoreVertical className="w-5 h-5" />
                       </button>
                     </div>
@@ -122,6 +202,77 @@ const LibraryManagement: React.FC = () => {
           </table>
         </div>
       </Card>
+
+      {/* Add/Edit Library Modal */}
+      <Modal
+        isOpen={isAddModalOpen || isEditModalOpen}
+        onClose={() => {
+          setIsAddModalOpen(false);
+          setIsEditModalOpen(false);
+          setSelectedLibrary(null);
+          resetLibData();
+        }}
+        title={isEditModalOpen ? "Edit Library" : "Add New Library"}
+        size="lg"
+      >
+        <div className="space-y-4">
+          <Input
+            label="Library Name"
+            placeholder="Sunshine Community Toy Library"
+            value={libData.name}
+            onChange={(e) => setLibData({ ...libData, name: e.target.value })}
+            required
+          />
+          <Input
+            label="Description"
+            placeholder="Briefly describe the library..."
+            value={libData.description}
+            onChange={(e) => setLibData({ ...libData, description: e.target.value })}
+            required
+          />
+          <Input
+            label="Address"
+            placeholder="123 Main St, Anytown, ST 12345"
+            value={libData.address}
+            onChange={(e) => setLibData({ ...libData, address: e.target.value })}
+            required
+          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="Contact Email"
+              type="email"
+              placeholder="contact@library.com"
+              value={libData.contactEmail}
+              onChange={(e) => setLibData({ ...libData, contactEmail: e.target.value })}
+              required
+            />
+            <Input
+              label="Contact Phone"
+              placeholder="+1 (555) 000-0000"
+              value={libData.contactPhone}
+              onChange={(e) => setLibData({ ...libData, contactPhone: e.target.value })}
+              required
+            />
+          </div>
+
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button variant="outline" onClick={() => {
+              setIsAddModalOpen(false);
+              setIsEditModalOpen(false);
+              setSelectedLibrary(null);
+              resetLibData();
+            }}>
+              Cancel
+            </Button>
+            <Button
+              onClick={isEditModalOpen ? handleEditLibrary : handleAddLibrary}
+              disabled={!libData.name || !libData.contactEmail}
+            >
+              {isEditModalOpen ? 'Save Changes' : 'Create Library'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

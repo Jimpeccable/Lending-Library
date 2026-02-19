@@ -9,7 +9,7 @@ import Input from '../ui/Input';
 import Select from '../ui/Select';
 
 const Profile: React.FC = () => {
-  const { user } = useAuth();
+  const { user, updateUserProfile } = useAuth();
   const { membershipTiers, loans } = useLibrary();
   const [activeTab, setActiveTab] = useState('profile');
   const [isEditing, setIsEditing] = useState(false);
@@ -51,8 +51,14 @@ const Profile: React.FC = () => {
   ];
 
   const handleSaveProfile = () => {
-    // In a real app, this would update the user profile
-    console.log('Saving profile:', profileData);
+    if (user) {
+      updateUserProfile(user.id, {
+        fullName: profileData.fullName,
+        email: profileData.email,
+        phone: profileData.phone
+        // Other fields could be added to User type if needed
+      });
+    }
     setIsEditing(false);
   };
 

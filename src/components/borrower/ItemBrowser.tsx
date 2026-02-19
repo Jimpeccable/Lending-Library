@@ -7,6 +7,8 @@ import Card from '../ui/Card';
 import Badge from '../ui/Badge';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
+import Modal from '../ui/Modal';
+import { Item } from '../../types';
 
 const ItemBrowser: React.FC = () => {
   const { items, reserveItem, favorites, toggleFavorite } = useLibrary();
@@ -14,6 +16,7 @@ const ItemBrowser: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [ageFilter, setAgeFilter] = useState('');
+  const [selectedItem, setSelectedItem] = useState<Item | null>(null);
 
   const categories = [...new Set(items.map(item => item.category))];
   const ageGroups = [...new Set(items.map(item => item.ageRecommendation))];
@@ -206,7 +209,11 @@ const ItemBrowser: React.FC = () => {
                   <Calendar className="w-4 h-4 mr-2" />
                   {item.status === 'available' ? 'Reserve' : item.status.charAt(0).toUpperCase() + item.status.slice(1)}
                 </Button>
-                <Button variant="outline" className="flex-1">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setSelectedItem(item)}
+                >
                   View Details
                 </Button>
               </div>
@@ -226,6 +233,85 @@ const ItemBrowser: React.FC = () => {
           </div>
         </Card>
       )}
+
+      {/* Item Details Modal */}
+      <Modal
+        isOpen={!!selectedItem}
+        onClose={() => setSelectedItem(null)}
+        title={selectedItem?.name || 'Item Details'}
+        size="lg"
+      >
+        {selectedItem && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <img
+                src={selectedItem.imageUrls[0]}
+                alt={selectedItem.name}
+                className="w-full h-auto rounded-lg shadow-sm"
+              />
+              <div className="grid grid-cols-4 gap-2 mt-2">
+                {selectedItem.imageUrls.map((url, i) => (
+                  <img key={i} src={url} alt="" className="w-full h-16 object-cover rounded cursor-pointer border hover:border-blue-500" />
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <Badge variant={selectedItem.status === 'available' ? 'success' : 'warning'}>
+                  {selectedItem.status.charAt(0).toUpperCase() + selectedItem.status.slice(1)}
+                </Badge>
+                <h2 className="text-xl font-bold text-gray-900 mt-2">{selectedItem.name}</h2>
+                <p className="text-blue-600 font-medium">{selectedItem.category}</p>
+              </div>
+
+              <p className="text-gray-600">{selectedItem.description}</p>
+
+              <div className="grid grid-cols-2 gap-4 py-4 border-y border-gray-100">
+                <div>
+                  <span className="text-xs text-gray-500 uppercase font-semibold">Age Range</span>
+                  <p className="text-gray-900 font-medium">{selectedItem.ageRecommendation}</p>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-500 uppercase font-semibold">Condition</span>
+                  <p className={`font-medium capitalize ${getConditionColor(selectedItem.condition)}`}>
+                    {selectedItem.condition}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-500 uppercase font-semibold">Loan Period</span>
+                  <p className="text-gray-900 font-medium">{selectedItem.lendingPeriod} Days</p>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-500 uppercase font-semibold">Quantity</span>
+                  <p className="text-gray-900 font-medium">{selectedItem.quantity} Available</p>
+                </div>
+              </div>
+
+              <div className="flex space-x-3 pt-4">
+                <Button
+                  className="flex-1"
+                  disabled={selectedItem.status !== 'available'}
+                  onClick={() => {
+                    if (user) reserveItem(selectedItem.id, user.id);
+                    setSelectedItem(null);
+                  }}
+                >
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Reserve Now
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => toggleFavorite(selectedItem.id)}
+                >
+                  <Heart className={`w-4 h-4 mr-2 ${favorites.includes(selectedItem.id) ? 'fill-red-500 text-red-500' : ''}`} />
+                  {favorites.includes(selectedItem.id) ? 'Favorited' : 'Add to Favorites'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

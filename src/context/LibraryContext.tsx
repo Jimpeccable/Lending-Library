@@ -27,6 +27,12 @@ interface LibraryContextType {
   approveLibrary: (libraryId: string) => void;
   suspendLibrary: (libraryId: string) => void;
   updateLibrary: (libraryId: string, updates: Partial<Library>) => void;
+  addLibrary: (library: Omit<Library, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  addMembershipTier: (tier: Omit<MembershipTier, 'id'>) => void;
+  updateMembershipTier: (id: string, tier: Partial<MembershipTier>) => void;
+  deleteMembershipTier: (id: string) => void;
+  addMember: (member: Omit<Member, 'id' | 'joinDate' | 'totalLoans' | 'activeLoans' | 'outstandingFees'>) => void;
+  updateMemberStatus: (id: string, status: Member['status']) => void;
 }
 
 const LibraryContext = createContext<LibraryContextType | undefined>(undefined);
@@ -54,7 +60,7 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
     membershipRequired: true
   });
   const [libraries, setLibraries] = useState<Library[]>([]);
-  const [membershipTiers] = useState<MembershipTier[]>(mockMembershipTiers);
+  const [membershipTiers, setMembershipTiers] = useState<MembershipTier[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Load data from localStorage or mockData
@@ -67,6 +73,7 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const storedMessages = localStorage.getItem('library_messages');
     const storedSettings = localStorage.getItem('library_settings');
     const storedLibraries = localStorage.getItem('library_list');
+    const storedTiers = localStorage.getItem('membership_tiers');
 
     if (storedItems) setItems(JSON.parse(storedItems));
     else setItems(mockItems);
@@ -81,6 +88,9 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
     else setReservations(mockReservations);
 
     if (storedFavorites) setFavorites(JSON.parse(storedFavorites));
+
+    if (storedTiers) setMembershipTiers(JSON.parse(storedTiers));
+    else setMembershipTiers(mockMembershipTiers);
 
     if (storedMessages) setMessages(JSON.parse(storedMessages));
     else {
@@ -138,8 +148,9 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
       localStorage.setItem('library_messages', JSON.stringify(messages));
       localStorage.setItem('library_settings', JSON.stringify(librarySettings));
       localStorage.setItem('library_list', JSON.stringify(libraries));
+      localStorage.setItem('membership_tiers', JSON.stringify(membershipTiers));
     }
-  }, [items, members, loans, reservations, favorites, messages, librarySettings, libraries, isLoaded]);
+  }, [items, members, loans, reservations, favorites, messages, librarySettings, libraries, membershipTiers, isLoaded]);
 
   const addItem = (itemData: Omit<Item, 'id' | 'createdAt' | 'updatedAt'>) => {
     const newItem: Item = {
@@ -306,11 +317,64 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
     showToast('Library updated', 'success');
   };
 
+  const addLibrary = (libraryData: Omit<Library, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const newLibrary: Library = {
+      ...libraryData,
+      id: `lib-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    setLibraries(prev => [...prev, newLibrary]);
+    showToast(`${newLibrary.name} added successfully`, 'success');
+  };
+
+  const addMembershipTier = (tierData: Omit<MembershipTier, 'id'>) => {
+    const newTier: MembershipTier = {
+      ...tierData,
+      id: `tier-${Date.now()}`
+    };
+    setMembershipTiers(prev => [...prev, newTier]);
+    showToast(`${newTier.name} tier added`, 'success');
+  };
+
+  const updateMembershipTier = (id: string, tierUpdate: Partial<MembershipTier>) => {
+    setMembershipTiers(prev => prev.map(tier =>
+      tier.id === id ? { ...tier, ...tierUpdate } : tier
+    ));
+    showToast('Membership tier updated', 'success');
+  };
+
+  const deleteMembershipTier = (id: string) => {
+    setMembershipTiers(prev => prev.filter(tier => tier.id !== id));
+    showToast('Membership tier deleted', 'warning');
+  };
+
+  const addMember = (memberData: Omit<Member, 'id' | 'joinDate' | 'totalLoans' | 'activeLoans' | 'outstandingFees'>) => {
+    const newMember: Member = {
+      ...memberData,
+      id: `member-${Date.now()}`,
+      joinDate: new Date().toISOString(),
+      totalLoans: 0,
+      activeLoans: 0,
+      outstandingFees: 0
+    };
+    setMembers(prev => [...prev, newMember]);
+    showToast('Member added successfully', 'success');
+  };
+
+  const updateMemberStatus = (id: string, status: Member['status']) => {
+    setMembers(prev => prev.map(member =>
+      member.id === id ? { ...member, status } : member
+    ));
+    showToast(`Member status updated to ${status}`, 'success');
+  };
+
   return (
     <LibraryContext.Provider value={{
       items, members, loans, reservations, libraries, membershipTiers, favorites, messages, librarySettings,
       addItem, updateItem, deleteItem, checkoutItem, returnItem, reserveItem, cancelReservation, toggleFavorite,
-      sendMessage, updateSettings, approveLibrary, suspendLibrary, updateLibrary
+      sendMessage, updateSettings, approveLibrary, suspendLibrary, updateLibrary, addLibrary,
+      addMembershipTier, updateMembershipTier, deleteMembershipTier, addMember, updateMemberStatus
     }}>
       {children}
     </LibraryContext.Provider>

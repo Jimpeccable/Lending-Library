@@ -4,9 +4,76 @@ import { useAuth } from '../../context/AuthContext';
 import Card from '../ui/Card';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
+import Modal from '../ui/Modal';
+import Input from '../ui/Input';
+import Select from '../ui/Select';
+import { useState } from 'react';
+import { User } from '../../types';
 
 const UserManagement: React.FC = () => {
-  const { allUsers, updateUserStatus } = useAuth();
+  const { allUsers, updateUserStatus, register, updateUserProfile } = useAuth();
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const [userData, setUserData] = useState({
+    email: '',
+    fullName: '',
+    password: '',
+    role: 'borrower' as 'host' | 'borrower' | 'super-user'
+  });
+
+  const filteredUsers = allUsers.filter(user =>
+    user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleAddUser = async () => {
+    try {
+      await register(userData.email, userData.password, userData.fullName, userData.role as 'host' | 'borrower');
+      setIsAddModalOpen(false);
+      resetUserData();
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        alert(error.message);
+      } else {
+        alert('An unknown error occurred');
+      }
+    }
+  };
+
+  const handleEditUser = () => {
+    if (!selectedUser) return;
+    updateUserProfile(selectedUser.id, {
+      fullName: userData.fullName,
+      email: userData.email,
+      role: userData.role as 'host' | 'borrower' | 'super-user'
+    });
+    setIsEditModalOpen(false);
+    setSelectedUser(null);
+    resetUserData();
+  };
+
+  const resetUserData = () => {
+    setUserData({
+      email: '',
+      fullName: '',
+      password: '',
+      role: 'borrower'
+    });
+  };
+
+  const openEditModal = (user: User) => {
+    setSelectedUser(user);
+    setUserData({
+      email: user.email,
+      fullName: user.fullName,
+      password: '',
+      role: user.role
+    });
+    setIsEditModalOpen(true);
+  };
 
   const getRoleBadge = (role: string) => {
     switch (role) {
@@ -44,7 +111,7 @@ const UserManagement: React.FC = () => {
             <Shield className="w-4 h-4 mr-2" />
             Moderation Logs
           </Button>
-          <Button>
+          <Button onClick={() => setIsAddModalOpen(true)}>
             <Users className="w-4 h-4 mr-2" />
             Add User
           </Button>
@@ -58,6 +125,8 @@ const UserManagement: React.FC = () => {
             <input
               type="text"
               placeholder="Search users by name or email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm"
             />
           </div>
@@ -81,7 +150,7 @@ const UserManagement: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {allUsers.map((user) => (
+              {filteredUsers.map((user) => (
                 <tr key={user.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center">
@@ -126,7 +195,10 @@ const UserManagement: React.FC = () => {
                           )}
                         </>
                       )}
-                      <button className="p-1 text-gray-400 hover:bg-gray-50 rounded">
+                      <button
+                        onClick={() => openEditModal(user)}
+                        className="p-1 text-gray-400 hover:bg-gray-50 rounded"
+                      >
                         <MoreVertical className="w-5 h-5" />
                       </button>
                     </div>
@@ -137,6 +209,75 @@ const UserManagement: React.FC = () => {
           </table>
         </div>
       </Card>
+
+      {/* Add/Edit User Modal */}
+      <Modal
+        isOpen={isAddModalOpen || isEditModalOpen}
+        onClose={() => {
+          setIsAddModalOpen(false);
+          setIsEditModalOpen(false);
+          setSelectedUser(null);
+          resetUserData();
+        }}
+        title={isEditModalOpen ? "Edit User" : "Add New User"}
+        size="md"
+      >
+        <div className="space-y-4">
+          <Input
+            label="Full Name"
+            placeholder="Jane Doe"
+            value={userData.fullName}
+            onChange={(e) => setUserData({ ...userData, fullName: e.target.value })}
+            required
+          />
+          <Input
+            label="Email Address"
+            type="email"
+            placeholder="jane@example.com"
+            value={userData.email}
+            onChange={(e) => setUserData({ ...userData, email: e.target.value })}
+            required
+          />
+          {!isEditModalOpen && (
+            <Input
+              label="Password"
+              type="password"
+              placeholder="••••••••"
+              value={userData.password}
+              onChange={(e) => setUserData({ ...userData, password: e.target.value })}
+              required
+            />
+          )}
+          <Select
+            label="User Role"
+            value={userData.role}
+            onChange={(e) => setUserData({ ...userData, role: e.target.value as 'host' | 'borrower' | 'super-user' })}
+            options={[
+              { value: 'borrower', label: 'Borrower' },
+              { value: 'host', label: 'Library Host' },
+              { value: 'super-user', label: 'Super Administrator' }
+            ]}
+            required
+          />
+
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button variant="outline" onClick={() => {
+              setIsAddModalOpen(false);
+              setIsEditModalOpen(false);
+              setSelectedUser(null);
+              resetUserData();
+            }}>
+              Cancel
+            </Button>
+            <Button
+              onClick={isEditModalOpen ? handleEditUser : handleAddUser}
+              disabled={!userData.fullName || !userData.email || (!isEditModalOpen && !userData.password)}
+            >
+              {isEditModalOpen ? 'Save Changes' : 'Create User'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

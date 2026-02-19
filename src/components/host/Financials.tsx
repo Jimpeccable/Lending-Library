@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { DollarSign, CreditCard, AlertCircle, TrendingUp, Download, Plus } from 'lucide-react';
+import { DollarSign, CreditCard, AlertCircle, TrendingUp, Download, Plus, Edit } from 'lucide-react';
 import { useLibrary } from '../../context/LibraryContext';
+import { MembershipTier } from '../../types';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import Badge from '../ui/Badge';
@@ -9,8 +10,10 @@ import Select from '../ui/Select';
 import Modal from '../ui/Modal';
 
 const Financials: React.FC = () => {
-  const { items, members, membershipTiers } = useLibrary();
+  const { items, members, membershipTiers, addMembershipTier, updateMembershipTier, deleteMembershipTier } = useLibrary();
   const [isAddTierModalOpen, setIsAddTierModalOpen] = useState(false);
+  const [isEditTierModalOpen, setIsEditTierModalOpen] = useState(false);
+  const [selectedTier, setSelectedTier] = useState<MembershipTier | null>(null);
   const [newTier, setNewTier] = useState({
     name: '',
     description: '',
@@ -65,9 +68,37 @@ const Financials: React.FC = () => {
   ];
 
   const handleAddTier = () => {
-    // In a real app, this would save to the database
-    console.log('Adding new tier:', newTier);
+    addMembershipTier({
+      libraryId: 'lib1',
+      name: newTier.name,
+      description: newTier.description,
+      price: parseFloat(newTier.price),
+      billingInterval: newTier.billingInterval,
+      borrowingLimit: parseInt(newTier.borrowingLimit),
+      maxLoanDuration: parseInt(newTier.maxLoanDuration),
+      benefits: newTier.benefits.split(',').map(b => b.trim()).filter(b => b !== '')
+    });
     setIsAddTierModalOpen(false);
+    resetNewTier();
+  };
+
+  const handleEditTier = () => {
+    if (!selectedTier) return;
+    updateMembershipTier(selectedTier.id, {
+      name: newTier.name,
+      description: newTier.description,
+      price: parseFloat(newTier.price),
+      billingInterval: newTier.billingInterval,
+      borrowingLimit: parseInt(newTier.borrowingLimit),
+      maxLoanDuration: parseInt(newTier.maxLoanDuration),
+      benefits: newTier.benefits.split(',').map(b => b.trim()).filter(b => b !== '')
+    });
+    setIsEditTierModalOpen(false);
+    setSelectedTier(null);
+    resetNewTier();
+  };
+
+  const resetNewTier = () => {
     setNewTier({
       name: '',
       description: '',
@@ -77,6 +108,20 @@ const Financials: React.FC = () => {
       maxLoanDuration: '',
       benefits: ''
     });
+  };
+
+  const openEditModal = (tier: MembershipTier) => {
+    setSelectedTier(tier);
+    setNewTier({
+      name: tier.name,
+      description: tier.description,
+      price: tier.price.toString(),
+      billingInterval: tier.billingInterval,
+      borrowingLimit: tier.borrowingLimit.toString(),
+      maxLoanDuration: tier.maxLoanDuration.toString(),
+      benefits: tier.benefits.join(', ')
+    });
+    setIsEditTierModalOpen(true);
   };
 
   const getTransactionTypeColor = (type: string) => {
@@ -186,7 +231,21 @@ const Financials: React.FC = () => {
           
           <div className="space-y-4">
             {membershipTiers.map((tier) => (
-              <div key={tier.id} className="border border-gray-200 rounded-lg p-4">
+              <div key={tier.id} className="border border-gray-200 rounded-lg p-4 relative group">
+                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex space-x-1">
+                  <button
+                    onClick={() => openEditModal(tier)}
+                    className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => deleteMembershipTier(tier.id)}
+                    className="p-1 text-red-600 hover:bg-red-50 rounded"
+                  >
+                    <Plus className="w-4 h-4 rotate-45" />
+                  </button>
+                </div>
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-semibold text-gray-900">{tier.name}</h3>
                   <div className="text-lg font-bold text-gray-900">
@@ -255,11 +314,16 @@ const Financials: React.FC = () => {
         </Card>
       </div>
 
-      {/* Add Membership Tier Modal */}
+      {/* Add/Edit Membership Tier Modal */}
       <Modal
-        isOpen={isAddTierModalOpen}
-        onClose={() => setIsAddTierModalOpen(false)}
-        title="Add Membership Tier"
+        isOpen={isAddTierModalOpen || isEditTierModalOpen}
+        onClose={() => {
+          setIsAddTierModalOpen(false);
+          setIsEditTierModalOpen(false);
+          setSelectedTier(null);
+          resetNewTier();
+        }}
+        title={isEditTierModalOpen ? "Edit Membership Tier" : "Add Membership Tier"}
         size="lg"
       >
         <div className="space-y-4">
@@ -322,10 +386,17 @@ const Financials: React.FC = () => {
           />
           
           <div className="flex justify-end space-x-3">
-            <Button variant="outline" onClick={() => setIsAddTierModalOpen(false)}>
+            <Button variant="outline" onClick={() => {
+              setIsAddTierModalOpen(false);
+              setIsEditTierModalOpen(false);
+              setSelectedTier(null);
+              resetNewTier();
+            }}>
               Cancel
             </Button>
-            <Button onClick={handleAddTier}>Add Tier</Button>
+            <Button onClick={isEditTierModalOpen ? handleEditTier : handleAddTier}>
+              {isEditTierModalOpen ? 'Save Changes' : 'Add Tier'}
+            </Button>
           </div>
         </div>
       </Modal>

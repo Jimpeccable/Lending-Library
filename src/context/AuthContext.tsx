@@ -6,6 +6,7 @@ interface AuthContextType extends AuthState {
   logout: () => void;
   register: (email: string, password: string, fullName: string, role: 'host' | 'borrower') => Promise<void>;
   updateUserStatus: (userId: string, status: 'active' | 'suspended') => void;
+  updateUserProfile: (userId: string, updates: Partial<User>) => void;
   allUsers: User[];
 }
 
@@ -153,8 +154,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updateUserProfile = (userId: string, updates: Partial<User>) => {
+    const updatedUsers = allUsers.map(u =>
+      u.id === userId ? { ...u, ...updates, updatedAt: new Date().toISOString() } : u
+    );
+    setAllUsers(updatedUsers);
+    localStorage.setItem('all_users', JSON.stringify(updatedUsers));
+
+    // If current user is updated, update authState too
+    if (authState.user?.id === userId) {
+      const updatedUser = { ...authState.user, ...updates, updatedAt: new Date().toISOString() };
+      setAuthState(prev => ({ ...prev, user: updatedUser }));
+      localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ ...authState, login, logout, register, updateUserStatus, allUsers }}>
+    <AuthContext.Provider value={{ ...authState, login, logout, register, updateUserStatus, updateUserProfile, allUsers }}>
       {children}
     </AuthContext.Provider>
   );

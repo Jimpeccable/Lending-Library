@@ -27,32 +27,19 @@ const MyLoans: React.FC = () => {
     })
     .filter(loan => loan.item);
 
-  const loanHistory = [
-    {
-      id: 'hist1',
-      itemName: 'Wooden Rainbow Rings',
-      checkoutDate: '2024-11-15',
-      returnDate: '2024-11-29',
-      status: 'returned',
-      rating: 5
-    },
-    {
-      id: 'hist2',
-      itemName: 'Fisher-Price Learning Chair',
-      checkoutDate: '2024-10-20',
-      returnDate: '2024-11-03',
-      status: 'returned',
-      rating: 4
-    },
-    {
-      id: 'hist3',
-      itemName: 'Building Blocks Set',
-      checkoutDate: '2024-10-01',
-      returnDate: '2024-10-15',
-      status: 'returned',
-      rating: 5
-    }
-  ];
+  const loanHistory = userLoans
+    .filter(loan => loan.status === 'returned')
+    .map(loan => {
+      const item = items.find(item => item.id === loan.itemId);
+      return {
+        id: loan.id,
+        itemName: item?.name || 'Unknown Item',
+        checkoutDate: loan.checkoutDate,
+        returnDate: loan.returnDate || loan.updatedAt,
+        status: 'returned',
+        rating: 5
+      };
+    });
 
   const getDaysUntilDue = (dueDate: string) => {
     const due = new Date(dueDate);

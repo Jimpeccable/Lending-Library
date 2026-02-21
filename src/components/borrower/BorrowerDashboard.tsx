@@ -16,7 +16,7 @@ import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 
 const BorrowerDashboard: React.FC = () => {
-  const { loans, items, reservations } = useLibrary();
+  const { loans, items, reservations, favorites } = useLibrary();
   const { user } = useAuth();
 
   const userLoans = loans.filter(loan => loan.borrowerId === user?.id);
@@ -24,9 +24,9 @@ const BorrowerDashboard: React.FC = () => {
   
   const stats = {
     activeLoans: userLoans.filter(loan => loan.status === 'active').length,
-    totalLoans: 12,
+    totalLoans: userLoans.length,
     activeReservations: userReservations.filter(res => res.status === 'active').length,
-    favorites: 5
+    favorites: favorites.length
   };
 
   const currentLoans = userLoans.map(loan => {
@@ -42,31 +42,28 @@ const BorrowerDashboard: React.FC = () => {
   });
 
   const recentActivities = [
-    {
-      id: '1',
-      type: 'loan',
-      message: 'You borrowed LEGO Creator 3-in-1 Set',
-      time: '2 days ago',
-      icon: BookOpen,
-      color: 'text-blue-600'
-    },
-    {
-      id: '2',
-      type: 'return',
-      message: 'You returned Wooden Rainbow Rings',
-      time: '1 week ago',
-      icon: CheckCircle,
-      color: 'text-green-600'
-    },
-    {
-      id: '3',
-      type: 'reservation',
-      message: 'Fisher-Price Smart Chair is ready for pickup',
-      time: '1 week ago',
-      icon: Calendar,
-      color: 'text-orange-600'
-    }
-  ];
+    ...userLoans.map(loan => {
+      const item = items.find(i => i.id === loan.itemId);
+      return {
+        id: loan.id,
+        type: loan.status === 'returned' ? 'return' : 'loan',
+        message: `You ${loan.status === 'returned' ? 'returned' : 'borrowed'} ${item?.name || 'an item'}`,
+        time: new Date(loan.updatedAt).toLocaleDateString(),
+        icon: loan.status === 'returned' ? CheckCircle : BookOpen,
+        color: loan.status === 'returned' ? 'text-green-600' : 'text-blue-600'
+      };
+    }),
+    ...userReservations.map(res => {
+      return {
+        id: res.id,
+        type: 'reservation',
+        message: `${res.itemName} is ${res.status}`,
+        time: new Date(res.reservationDate).toLocaleDateString(),
+        icon: Calendar,
+        color: 'text-orange-600'
+      };
+    })
+  ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 5);
 
   return (
     <div className="space-y-6">

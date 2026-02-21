@@ -1,16 +1,27 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { Item, Member, Loan, Reservation, Library, MembershipTier, Message, LibrarySettings } from '../types';
 import { mockItems, mockMembers, mockLoans, mockReservations, mockLibraries, mockMembershipTiers } from '../data/mockData';
 import { useToast } from './ToastContext';
+import { useAuth } from './AuthContext';
 
 interface LibraryContextType {
+  // Filtered data for current user
   items: Item[];
   members: Member[];
   loans: Loan[];
   reservations: Reservation[];
-  libraries: Library[];
   membershipTiers: MembershipTier[];
   messages: Message[];
+
+  // Full datasets for super-users
+  allItems: Item[];
+  allMembers: Member[];
+  allLoans: Loan[];
+  allReservations: Reservation[];
+  allMembershipTiers: MembershipTier[];
+  allMessages: Message[];
+
+  libraries: Library[];
   librarySettings: LibrarySettings;
   favorites: string[];
 
@@ -39,6 +50,7 @@ const LibraryContext = createContext<LibraryContextType | undefined>(undefined);
 
 export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { showToast } = useToast();
+  const { user } = useAuth();
   const [items, setItems] = useState<Item[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [loans, setLoans] = useState<Loan[]>([]);
@@ -152,6 +164,43 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   }, [items, members, loans, reservations, favorites, messages, librarySettings, libraries, membershipTiers, isLoaded]);
 
+  // Isolated data based on user libraryId
+  const filteredItems = useMemo(() => {
+    if (!user) return [];
+    if (user.role === 'super-user') return items;
+    return items.filter(item => item.libraryId === user.libraryId);
+  }, [items, user]);
+
+  const filteredMembers = useMemo(() => {
+    if (!user) return [];
+    if (user.role === 'super-user') return members;
+    return members.filter(member => member.libraryId === user.libraryId);
+  }, [members, user]);
+
+  const filteredLoans = useMemo(() => {
+    if (!user) return [];
+    if (user.role === 'super-user') return loans;
+    return loans.filter(loan => loan.libraryId === user.libraryId);
+  }, [loans, user]);
+
+  const filteredReservations = useMemo(() => {
+    if (!user) return [];
+    if (user.role === 'super-user') return reservations;
+    return reservations.filter(res => res.libraryId === user.libraryId);
+  }, [reservations, user]);
+
+  const filteredTiers = useMemo(() => {
+    if (!user) return [];
+    if (user.role === 'super-user') return membershipTiers;
+    return membershipTiers.filter(tier => tier.libraryId === user.libraryId);
+  }, [membershipTiers, user]);
+
+  const filteredMessages = useMemo(() => {
+    if (!user) return [];
+    if (user.role === 'super-user') return messages;
+    return messages.filter(msg => msg.senderId === user.id || msg.recipientId === user.id);
+  }, [messages, user]);
+
   const addItem = (itemData: Omit<Item, 'id' | 'createdAt' | 'updatedAt'>) => {
     const newItem: Item = {
       ...itemData,
@@ -176,11 +225,12 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const checkoutItem = (itemId: string, borrowerId: string, dueDate: string) => {
+    const item = items.find(i => i.id === itemId);
     const newLoan: Loan = {
       id: `loan-${Date.now()}`,
       itemId,
       borrowerId,
-      libraryId: 'lib1', // Assuming single library for now
+      libraryId: item?.libraryId || user?.libraryId || 'lib1',
       checkoutDate: new Date().toISOString(),
       dueDate,
       status: 'active',
@@ -371,7 +421,21 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   return (
     <LibraryContext.Provider value={{
-      items, members, loans, reservations, libraries, membershipTiers, favorites, messages, librarySettings,
+      items: filteredItems,
+      members: filteredMembers,
+      loans: filteredLoans,
+      reservations: filteredReservations,
+      membershipTiers: filteredTiers,
+      messages: filteredMessages,
+      allItems: items,
+      allMembers: members,
+      allLoans: loans,
+      allReservations: reservations,
+      allMembershipTiers: membershipTiers,
+      allMessages: messages,
+      libraries,
+      librarySettings,
+      favorites,
       addItem, updateItem, deleteItem, checkoutItem, returnItem, reserveItem, cancelReservation, toggleFavorite,
       sendMessage, updateSettings, approveLibrary, suspendLibrary, updateLibrary, addLibrary,
       addMembershipTier, updateMembershipTier, deleteMembershipTier, addMember, updateMemberStatus

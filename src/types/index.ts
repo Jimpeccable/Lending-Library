@@ -7,6 +7,7 @@ export interface User {
   status: 'active' | 'suspended';
   libraryId?: string;
   membershipTierId?: string;
+  address?: string;
   createdAt: string;
   updatedAt: string;
 }

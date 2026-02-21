@@ -10,6 +10,7 @@ import {
   Bell
 } from 'lucide-react';
 import { useLibrary } from '../../context/LibraryContext';
+import { useAuth } from '../../context/AuthContext';
 import Card from '../ui/Card';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
@@ -19,6 +20,7 @@ import Input from '../ui/Input';
 
 const HostDashboard: React.FC = () => {
   const { items, members, loans, checkoutItem } = useLibrary();
+  const { allUsers } = useAuth();
   const [isQuickCheckoutOpen, setIsQuickCheckoutOpen] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState('');
   const [selectedMemberId, setSelectedMemberId] = useState('');
@@ -38,39 +40,30 @@ const HostDashboard: React.FC = () => {
   };
 
   const recentActivities = [
-    {
-      id: '1',
-      type: 'checkout',
-      message: 'John Borrower checked out LEGO Creator Set',
-      time: '2 hours ago',
-      icon: BookOpen,
-      color: 'text-blue-600'
-    },
-    {
-      id: '2',
-      type: 'return',
-      message: 'Sarah Johnson returned Wooden Activity Table',
-      time: '4 hours ago',
-      icon: Package,
-      color: 'text-green-600'
-    },
-    {
-      id: '3',
-      type: 'member',
-      message: 'New member registration: Mike Wilson',
-      time: '1 day ago',
-      icon: Users,
-      color: 'text-teal-600'
-    },
-    {
-      id: '4',
-      type: 'overdue',
-      message: 'Item overdue: Remote Control Dinosaur',
-      time: '1 day ago',
-      icon: AlertTriangle,
-      color: 'text-red-600'
-    }
-  ];
+    ...loans.map(loan => {
+      const item = items.find(i => i.id === loan.itemId);
+      const user = allUsers.find(u => u.id === loan.borrowerId);
+      return {
+        id: loan.id,
+        type: loan.status === 'returned' ? 'return' : 'checkout',
+        message: `${user?.fullName || 'Someone'} ${loan.status === 'returned' ? 'returned' : 'checked out'} ${item?.name || 'an item'}`,
+        time: new Date(loan.updatedAt).toLocaleDateString(),
+        icon: loan.status === 'returned' ? Package : BookOpen,
+        color: loan.status === 'returned' ? 'text-green-600' : 'text-blue-600'
+      };
+    }),
+    ...members.map(member => {
+      const user = allUsers.find(u => u.id === member.userId);
+      return {
+        id: member.id,
+        type: 'member',
+        message: `New member registration: ${user?.fullName || 'Unknown'}`,
+        time: new Date(member.joinDate).toLocaleDateString(),
+        icon: Users,
+        color: 'text-teal-600'
+      };
+    })
+  ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 5);
 
   const handleQuickCheckout = () => {
     if (selectedItemId && selectedMemberId && dueDate) {
@@ -265,7 +258,10 @@ const HostDashboard: React.FC = () => {
             label="Select Member"
             value={selectedMemberId}
             onChange={(e) => setSelectedMemberId(e.target.value)}
-            options={members.map(member => ({ value: member.id, label: member.userId === '2' ? 'John Borrower' : `Member ${member.id}` }))}
+            options={members.map(member => {
+              const user = allUsers.find(u => u.id === member.userId);
+              return { value: member.id, label: user?.fullName || `Member ${member.id}` };
+            })}
             placeholder="Choose a member..."
             required
           />

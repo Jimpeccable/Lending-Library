@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Search, Plus, Filter, Edit, Trash2, Eye, QrCode, Grid, List, Download, Upload } from 'lucide-react';
 import { useLibrary } from '../../context/LibraryContext';
+import { useAuth } from '../../context/AuthContext';
 import { Item } from '../../types';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
@@ -11,6 +12,7 @@ import Modal from '../ui/Modal';
 
 const InventoryManagement: React.FC = () => {
   const { items, addItem, updateItem, deleteItem } = useLibrary();
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -104,7 +106,7 @@ const InventoryManagement: React.FC = () => {
 
   const handleAddItem = () => {
     addItem({
-      libraryId: 'lib1',
+      libraryId: user?.libraryId || 'lib1',
       name: newItem.name,
       description: newItem.description,
       category: newItem.category,

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Shield,
   Lock,
@@ -14,12 +14,19 @@ import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 
 const SecuritySettings: React.FC = () => {
-  const [settings, setSettings] = useState([
-    { id: '2fa', label: 'Two-Factor Authentication', desc: 'Require 2FA for all administrative accounts', enabled: true },
-    { id: 'ip', label: 'IP Whitelisting', desc: 'Restrict host logins to specific IP ranges', enabled: false },
-    { id: 'timeout', label: 'Session Timeout', desc: 'Automatically logout inactive users after 30 minutes', enabled: true },
-    { id: 'password', label: 'Password Complexity', desc: 'Enforce strong password requirements for all users', enabled: true }
-  ]);
+  const [settings, setSettings] = useState(() => {
+    const saved = localStorage.getItem('platform_security_settings');
+    return saved ? JSON.parse(saved) : [
+      { id: '2fa', label: 'Two-Factor Authentication', desc: 'Require 2FA for all administrative accounts', enabled: true },
+      { id: 'ip', label: 'IP Whitelisting', desc: 'Restrict host logins to specific IP ranges', enabled: false },
+      { id: 'timeout', label: 'Session Timeout', desc: 'Automatically logout inactive users after 30 minutes', enabled: true },
+      { id: 'password', label: 'Password Complexity', desc: 'Enforce strong password requirements for all users', enabled: true }
+    ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('platform_security_settings', JSON.stringify(settings));
+  }, [settings]);
 
   const toggleSetting = (id: string) => {
     setSettings(prev => prev.map(s => s.id === id ? { ...s, enabled: !s.enabled } : s));

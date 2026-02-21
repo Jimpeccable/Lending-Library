@@ -54,9 +54,10 @@ const MemberManagement: React.FC = () => {
 
   const statuses = ['active', 'suspended', 'pending'];
 
+  const { user: currentUser } = useAuth();
   const handleAddMember = () => {
     addMember({
-      libraryId: 'lib1',
+      libraryId: currentUser?.libraryId || 'lib1',
       userId: newMember.userId,
       membershipTierId: newMember.membershipTierId,
       status: newMember.status

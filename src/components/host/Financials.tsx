@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { DollarSign, CreditCard, AlertCircle, TrendingUp, Download, Plus, Edit } from 'lucide-react';
 import { useLibrary } from '../../context/LibraryContext';
+import { useAuth } from '../../context/AuthContext';
 import { MembershipTier } from '../../types';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
@@ -11,6 +12,7 @@ import Modal from '../ui/Modal';
 
 const Financials: React.FC = () => {
   const { items, members, membershipTiers, addMembershipTier, updateMembershipTier, deleteMembershipTier } = useLibrary();
+  const { user } = useAuth();
   const [isAddTierModalOpen, setIsAddTierModalOpen] = useState(false);
   const [isEditTierModalOpen, setIsEditTierModalOpen] = useState(false);
   const [selectedTier, setSelectedTier] = useState<MembershipTier | null>(null);
@@ -69,7 +71,7 @@ const Financials: React.FC = () => {
 
   const handleAddTier = () => {
     addMembershipTier({
-      libraryId: 'lib1',
+      libraryId: user?.libraryId || 'lib1',
       name: newTier.name,
       description: newTier.description,
       price: parseFloat(newTier.price),

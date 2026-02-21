@@ -43,8 +43,8 @@ const SuperUserDashboard: React.FC<SuperUserDashboardProps> = ({ onSectionChange
     {
       id: '2',
       type: 'info',
-      message: 'New library registration pending approval',
-      time: '4 hours ago',
+      message: `${libraries.filter(l => l.status === 'pending').length} library registration pending approval`,
+      time: 'Just now',
       severity: 'low'
     },
     {
@@ -56,32 +56,14 @@ const SuperUserDashboard: React.FC<SuperUserDashboardProps> = ({ onSectionChange
     }
   ];
 
-  const topLibraries = [
-    {
-      id: '1',
-      name: 'Sunshine Community Toy Library',
-      members: 25,
-      items: 156,
-      loans: 45,
-      revenue: 1250.75
-    },
-    {
-      id: '2',
-      name: 'Happy Kids Lending Hub',
-      members: 18,
-      items: 98,
-      loans: 32,
-      revenue: 890.50
-    },
-    {
-      id: '3',
-      name: 'Green Valley Toy Share',
-      members: 22,
-      items: 134,
-      loans: 38,
-      revenue: 1080.25
-    }
-  ];
+  const topLibrariesData = libraries.map(lib => ({
+    id: lib.id,
+    name: lib.name,
+    members: members.filter(m => m.libraryId === lib.id).length,
+    items: items.filter(i => i.libraryId === lib.id).length,
+    loans: loans.filter(l => l.libraryId === lib.id).length,
+    revenue: members.filter(m => m.libraryId === lib.id).reduce((sum, m) => sum + m.outstandingFees, 0)
+  })).sort((a, b) => b.members - a.members).slice(0, 3);
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
@@ -225,7 +207,7 @@ const SuperUserDashboard: React.FC<SuperUserDashboardProps> = ({ onSectionChange
           </div>
           
           <div className="space-y-4">
-            {topLibraries.map((library, index) => (
+            {topLibrariesData.map((library, index) => (
               <div key={library.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
                 <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                   <span className="text-sm font-bold text-blue-600">#{index + 1}</span>

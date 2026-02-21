@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   MessageSquare,
   Search,
@@ -15,38 +15,45 @@ import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 
 const SupportTickets: React.FC = () => {
-  const [tickets, setTickets] = useState([
-    {
-      id: 'TKT-1024',
-      subject: 'Unable to process membership payment',
-      sender: 'John Borrower',
-      role: 'borrower',
-      priority: 'high',
-      status: 'open',
-      timestamp: '2 hours ago',
-      lastMessage: 'I tried multiple cards but keep getting a generic error message...'
-    },
-    {
-      id: 'TKT-1023',
-      subject: 'New library registration inquiry',
-      sender: 'Sarah Greenfield',
-      role: 'guest',
-      priority: 'medium',
-      status: 'in-progress',
-      timestamp: '5 hours ago',
-      lastMessage: 'Is there a limit to how many items we can start with?'
-    },
-    {
-      id: 'TKT-1022',
-      subject: 'Incorrect loan due date',
-      sender: 'Library Host',
-      role: 'host',
-      priority: 'low',
-      status: 'closed',
-      timestamp: '1 day ago',
-      lastMessage: 'Thank you for fixing the system configuration.'
-    }
-  ]);
+  const [tickets, setTickets] = useState(() => {
+    const saved = localStorage.getItem('platform_support_tickets');
+    return saved ? JSON.parse(saved) : [
+      {
+        id: 'TKT-1024',
+        subject: 'Unable to process membership payment',
+        sender: 'John Borrower',
+        role: 'borrower',
+        priority: 'high',
+        status: 'open',
+        timestamp: '2 hours ago',
+        lastMessage: 'I tried multiple cards but keep getting a generic error message...'
+      },
+      {
+        id: 'TKT-1023',
+        subject: 'New library registration inquiry',
+        sender: 'Sarah Greenfield',
+        role: 'guest',
+        priority: 'medium',
+        status: 'in-progress',
+        timestamp: '5 hours ago',
+        lastMessage: 'Is there a limit to how many items we can start with?'
+      },
+      {
+        id: 'TKT-1022',
+        subject: 'Incorrect loan due date',
+        sender: 'Library Host',
+        role: 'host',
+        priority: 'low',
+        status: 'closed',
+        timestamp: '1 day ago',
+        lastMessage: 'Thank you for fixing the system configuration.'
+      }
+    ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('platform_support_tickets', JSON.stringify(tickets));
+  }, [tickets]);
 
   const updateTicketStatus = (id: string, newStatus: string) => {
     setTickets(prev => prev.map(t => t.id === id ? { ...t, status: newStatus } : t));

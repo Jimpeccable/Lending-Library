@@ -17,8 +17,8 @@ const Profile: React.FC = () => {
   const [profileData, setProfileData] = useState({
     fullName: user?.fullName || '',
     email: user?.email || '',
-    phone: '+1 (555) 123-4567',
-    address: '456 Oak Street, Sunshine, CA 90210',
+    phone: user?.phone || '+1 (555) 123-4567',
+    address: user?.address || '456 Oak Street, Sunshine, CA 90210',
     emergencyContact: 'Jane Doe - (555) 987-6543'
   });
 
@@ -55,8 +55,8 @@ const Profile: React.FC = () => {
       updateUserProfile(user.id, {
         fullName: profileData.fullName,
         email: profileData.email,
-        phone: profileData.phone
-        // Other fields could be added to User type if needed
+        phone: profileData.phone,
+        address: profileData.address
       });
     }
     setIsEditing(false);

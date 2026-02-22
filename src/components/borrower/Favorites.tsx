@@ -5,12 +5,30 @@ import { useAuth } from '../../context/AuthContext';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import Badge from '../ui/Badge';
+import { useToast } from '../../context/ToastContext';
 
 const Favorites: React.FC = () => {
   const { items, favorites, toggleFavorite, reserveItem } = useLibrary();
   const { user } = useAuth();
+  const { addToast } = useToast();
 
   const favoriteItems = items.filter(item => favorites.includes(item.id));
+
+  const handleToggleFavorite = (id: string) => {
+    toggleFavorite(id);
+    const isFav = favorites.includes(id);
+    addToast(isFav ? 'Removed from favorites' : 'Added to favorites', 'success');
+  };
+
+  const handleReserve = (itemId: string) => {
+    if (!user) return;
+    try {
+      reserveItem(itemId, user.id);
+      addToast('Item reserved successfully', 'success');
+    } catch (error) {
+      addToast('Failed to reserve item', 'danger');
+    }
+  };
 
   const getConditionColor = (condition: string) => {
     switch (condition) {
@@ -118,7 +136,7 @@ const Favorites: React.FC = () => {
                     className="w-full h-48 object-cover rounded-lg"
                   />
                   <button
-                    onClick={() => toggleFavorite(item.id)}
+                    onClick={() => handleToggleFavorite(item.id)}
                     className="absolute top-3 right-3 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
                   >
                     <Heart className="w-4 h-4 fill-current" />
@@ -161,7 +179,7 @@ const Favorites: React.FC = () => {
                   
                   <div className="flex space-x-2 pt-2">
                     {item.status === 'available' ? (
-                      <Button className="flex-1" onClick={() => user && reserveItem(item.id, user.id)}>
+                      <Button className="flex-1" onClick={() => handleReserve(item.id)}>
                         <Calendar className="w-4 h-4 mr-2" />
                         Reserve
                       </Button>
@@ -170,7 +188,7 @@ const Favorites: React.FC = () => {
                         Not Available
                       </Button>
                     )}
-                    <Button variant="outline" size="sm" onClick={() => toggleFavorite(item.id)}>
+                    <Button variant="outline" size="sm" onClick={() => handleToggleFavorite(item.id)}>
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
@@ -200,7 +218,7 @@ const Favorites: React.FC = () => {
                 <h3 className="text-sm font-medium text-gray-900 truncate">{item.name}</h3>
                 <p className="text-xs text-gray-600">{item.category}</p>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => toggleFavorite(item.id)}>
+              <Button variant="ghost" size="sm" onClick={() => handleToggleFavorite(item.id)}>
                 <Heart className={`w-4 h-4 ${favorites.includes(item.id) ? 'fill-current text-red-500' : ''}`} />
               </Button>
             </div>

@@ -7,10 +7,12 @@ import Card from '../ui/Card';
 import Badge from '../ui/Badge';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
+import { useToast } from '../../context/ToastContext';
 
 const Profile: React.FC = () => {
   const { user, updateUserProfile } = useAuth();
-  const { membershipTiers, loans } = useLibrary();
+  const { membershipTiers, loans, favorites } = useLibrary();
+  const { addToast } = useToast();
   const [activeTab, setActiveTab] = useState('profile');
   const [isEditing, setIsEditing] = useState(false);
   
@@ -39,7 +41,7 @@ const Profile: React.FC = () => {
     joinDate: user?.createdAt || '2024-01-15',
     totalLoans: userLoans.length,
     currentLoans: userLoans.filter(l => l.status === 'active').length,
-    favoriteItems: 5, // Keep mock for now
+    favoriteItems: favorites.length,
     outstandingFees: 0
   };
 
@@ -52,12 +54,17 @@ const Profile: React.FC = () => {
 
   const handleSaveProfile = () => {
     if (user) {
-      updateUserProfile(user.id, {
-        fullName: profileData.fullName,
-        email: profileData.email,
-        phone: profileData.phone,
-        address: profileData.address
-      });
+      try {
+        updateUserProfile(user.id, {
+          fullName: profileData.fullName,
+          email: profileData.email,
+          phone: profileData.phone,
+          address: profileData.address
+        });
+        addToast('Profile updated successfully', 'success');
+      } catch (error) {
+        addToast('Failed to update profile', 'danger');
+      }
     }
     setIsEditing(false);
   };

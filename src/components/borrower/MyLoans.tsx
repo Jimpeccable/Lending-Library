@@ -7,10 +7,12 @@ import Button from '../ui/Button';
 import Card from '../ui/Card';
 import Badge from '../ui/Badge';
 import Modal from '../ui/Modal';
+import { useToast } from '../../context/ToastContext';
 
 const MyLoans: React.FC = () => {
-  const { loans, items } = useLibrary();
+  const { loans, items, requestRenewal, renewalRequests } = useLibrary();
   const { user } = useAuth();
+  const { addToast } = useToast();
   const [activeTab, setActiveTab] = useState('current');
   const [isRenewModalOpen, setIsRenewModalOpen] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState<(Loan & { item: Item }) | null>(null);
@@ -53,11 +55,17 @@ const MyLoans: React.FC = () => {
   };
 
   const submitRenewalRequest = () => {
-    // In a real app, this would submit the renewal request
-    console.log('Renewal request:', { selectedLoan, renewalReason });
-    setIsRenewModalOpen(false);
-    setSelectedLoan(null);
-    setRenewalReason('');
+    if (selectedLoan) {
+      try {
+        requestRenewal(selectedLoan.id, renewalReason);
+        addToast('Renewal request submitted', 'success');
+        setIsRenewModalOpen(false);
+        setSelectedLoan(null);
+        setRenewalReason('');
+      } catch (error) {
+        addToast('Failed to submit renewal request', 'danger');
+      }
+    }
   };
 
   const renderCurrentLoans = () => (
@@ -121,15 +129,19 @@ const MyLoans: React.FC = () => {
                 </div>
                 
                 <div className="flex flex-col space-y-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => handleRenewRequest(loan)}
-                  >
-                    <RotateCcw className="w-4 h-4 mr-1" />
-                    Renew
-                  </Button>
-                  <Button variant="outline" size="sm">
+                  {renewalRequests.some(r => r.loanId === loan.id && r.status === 'pending') ? (
+                    <Badge variant="warning">Renewal Pending</Badge>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRenewRequest(loan)}
+                    >
+                      <RotateCcw className="w-4 h-4 mr-1" />
+                      Renew
+                    </Button>
+                  )}
+                  <Button variant="outline" size="sm" onClick={() => addToast('Please message the host for assistance.', 'info')}>
                     Contact Library
                   </Button>
                 </div>

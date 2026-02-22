@@ -7,17 +7,24 @@ import Modal from '../ui/Modal';
 import { useLibrary } from '../../context/LibraryContext';
 import { useAuth } from '../../context/AuthContext';
 import type { Reservation } from '../../types';
+import { useToast } from '../../context/ToastContext';
 
 export function Reservations() {
   const { reservations, cancelReservation } = useLibrary();
   const { user } = useAuth();
+  const { addToast } = useToast();
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
 
   const handleCancelReservation = (reservationId: string) => {
-    cancelReservation(reservationId);
-    setShowCancelModal(false);
-    setSelectedReservation(null);
+    try {
+      cancelReservation(reservationId);
+      addToast('Reservation cancelled', 'success');
+      setShowCancelModal(false);
+      setSelectedReservation(null);
+    } catch (error) {
+      addToast('Failed to cancel reservation', 'danger');
+    }
   };
 
   const getStatusColor = (status: string) => {

@@ -199,7 +199,7 @@ const Reports: React.FC = () => {
         </Card>
         <Card>
           <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">$125.50</div>
+            <div className="text-2xl font-bold text-blue-600">${overdueFees.toFixed(2)}</div>
             <div className="text-sm text-gray-600">Outstanding Fees</div>
           </div>
         </Card>

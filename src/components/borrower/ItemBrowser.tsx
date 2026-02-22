@@ -9,10 +9,12 @@ import Input from '../ui/Input';
 import Select from '../ui/Select';
 import Modal from '../ui/Modal';
 import { Item } from '../../types';
+import { useToast } from '../../context/ToastContext';
 
 const ItemBrowser: React.FC = () => {
   const { items, reserveItem, favorites, toggleFavorite } = useLibrary();
   const { user } = useAuth();
+  const { addToast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [ageFilter, setAgeFilter] = useState('');
@@ -20,6 +22,22 @@ const ItemBrowser: React.FC = () => {
 
   const categories = [...new Set(items.map(item => item.category))];
   const ageGroups = [...new Set(items.map(item => item.ageRecommendation))];
+
+  const handleToggleFavorite = (id: string) => {
+    toggleFavorite(id);
+    const isFav = favorites.includes(id);
+    addToast(isFav ? 'Removed from favorites' : 'Added to favorites', 'success');
+  };
+
+  const handleReserve = (itemId: string) => {
+    if (!user) return;
+    try {
+      reserveItem(itemId, user.id);
+      addToast('Item reserved successfully', 'success');
+    } catch (error) {
+      addToast('Failed to reserve item', 'danger');
+    }
+  };
 
   const filteredItems = items.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -154,7 +172,7 @@ const ItemBrowser: React.FC = () => {
                 className="w-full h-48 object-cover rounded-lg"
               />
               <button
-                onClick={() => toggleFavorite(item.id)}
+                onClick={() => handleToggleFavorite(item.id)}
                 className={`absolute top-3 right-3 p-2 rounded-full transition-colors ${
                   favorites.includes(item.id)
                     ? 'bg-red-500 text-white'
@@ -204,7 +222,7 @@ const ItemBrowser: React.FC = () => {
                 <Button
                   className="flex-1"
                   disabled={item.status !== 'available'}
-                  onClick={() => user && reserveItem(item.id, user.id)}
+                  onClick={() => handleReserve(item.id)}
                 >
                   <Calendar className="w-4 h-4 mr-2" />
                   {item.status === 'available' ? 'Reserve' : item.status.charAt(0).toUpperCase() + item.status.slice(1)}
@@ -293,7 +311,7 @@ const ItemBrowser: React.FC = () => {
                   className="flex-1"
                   disabled={selectedItem.status !== 'available'}
                   onClick={() => {
-                    if (user) reserveItem(selectedItem.id, user.id);
+                    handleReserve(selectedItem.id);
                     setSelectedItem(null);
                   }}
                 >
@@ -302,7 +320,7 @@ const ItemBrowser: React.FC = () => {
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => toggleFavorite(selectedItem.id)}
+                  onClick={() => handleToggleFavorite(selectedItem.id)}
                 >
                   <Heart className={`w-4 h-4 mr-2 ${favorites.includes(selectedItem.id) ? 'fill-red-500 text-red-500' : ''}`} />
                   {favorites.includes(selectedItem.id) ? 'Favorited' : 'Add to Favorites'}

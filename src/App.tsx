@@ -26,6 +26,7 @@ import UserManagement from './components/superuser/UserManagement';
 import Analytics from './components/superuser/Analytics';
 import SecuritySettings from './components/superuser/SecuritySettings';
 import SupportTickets from './components/superuser/SupportTickets';
+import FutureRequirements from './components/superuser/FutureRequirements';
 import { Package } from 'lucide-react';
 
 const AuthScreen: React.FC = () => {
@@ -78,7 +79,7 @@ const MainApp: React.FC = () => {
     if (user.role === 'host') {
       switch (activeSection) {
         case 'dashboard':
-          return <HostDashboard />;
+          return <HostDashboard onSectionChange={setActiveSection} />;
         case 'inventory':
           return <InventoryManagement />;
         case 'members':
@@ -94,12 +95,12 @@ const MainApp: React.FC = () => {
         case 'settings':
           return <Settings />;
         default:
-          return <HostDashboard />;
+          return <HostDashboard onSectionChange={setActiveSection} />;
       }
     } else if (user.role === 'borrower') {
       switch (activeSection) {
         case 'dashboard':
-          return <BorrowerDashboard />;
+          return <BorrowerDashboard onSectionChange={setActiveSection} />;
         case 'browse':
           return <ItemBrowser />;
         case 'my-loans':
@@ -113,7 +114,7 @@ const MainApp: React.FC = () => {
         case 'profile':
           return <Profile />;
         default:
-          return <BorrowerDashboard />;
+          return <BorrowerDashboard onSectionChange={setActiveSection} />;
       }
     } else if (user.role === 'super-user') {
       switch (activeSection) {
@@ -129,8 +130,10 @@ const MainApp: React.FC = () => {
           return <SecuritySettings />;
         case 'support':
           return <SupportTickets />;
+        case 'requirements':
+          return <FutureRequirements />;
         default:
-          return <SuperUserDashboard />;
+          return <SuperUserDashboard onSectionChange={setActiveSection} />;
       }
     }
     

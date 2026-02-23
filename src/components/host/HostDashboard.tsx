@@ -18,7 +18,11 @@ import Modal from '../ui/Modal';
 import Select from '../ui/Select';
 import Input from '../ui/Input';
 
-const HostDashboard: React.FC = () => {
+interface HostDashboardProps {
+  onSectionChange: (section: string) => void;
+}
+
+const HostDashboard: React.FC<HostDashboardProps> = ({ onSectionChange }) => {
   const { items, members, loans, checkoutItem } = useLibrary();
   const { allUsers } = useAuth();
   const [isQuickCheckoutOpen, setIsQuickCheckoutOpen] = useState(false);
@@ -213,19 +217,35 @@ const HostDashboard: React.FC = () => {
           <Card>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
             <div className="space-y-3">
-              <Button variant="outline" className="w-full justify-start">
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => onSectionChange('inventory')}
+              >
                 <Package className="w-4 h-4 mr-2" />
                 Add New Item
               </Button>
-              <Button variant="outline" className="w-full justify-start">
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => onSectionChange('members')}
+              >
                 <Users className="w-4 h-4 mr-2" />
                 Add Member
               </Button>
-              <Button variant="outline" className="w-full justify-start">
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => onSectionChange('loans')}
+              >
                 <BookOpen className="w-4 h-4 mr-2" />
                 Process Return
               </Button>
-              <Button variant="outline" className="w-full justify-start">
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => onSectionChange('reports')}
+              >
                 <TrendingUp className="w-4 h-4 mr-2" />
                 View Reports
               </Button>

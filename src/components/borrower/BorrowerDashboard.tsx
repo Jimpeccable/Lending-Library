@@ -15,7 +15,11 @@ import Card from '../ui/Card';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 
-const BorrowerDashboard: React.FC = () => {
+interface BorrowerDashboardProps {
+  onSectionChange: (section: string) => void;
+}
+
+const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({ onSectionChange }) => {
   const { loans, items, reservations, favorites } = useLibrary();
   const { user } = useAuth();
 
@@ -74,11 +78,11 @@ const BorrowerDashboard: React.FC = () => {
           <p className="text-gray-600">Manage your borrowed items and discover new toys</p>
         </div>
         <div className="flex space-x-3">
-          <Button variant="outline">
+          <Button variant="outline" onClick={() => onSectionChange('favorites')}>
             <Heart className="w-4 h-4 mr-2" />
             View Favorites
           </Button>
-          <Button>
+          <Button onClick={() => onSectionChange('browse')}>
             <Package className="w-4 h-4 mr-2" />
             Browse Items
           </Button>
@@ -239,19 +243,35 @@ const BorrowerDashboard: React.FC = () => {
           <Card>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
             <div className="space-y-3">
-              <Button variant="outline" className="w-full justify-start">
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => onSectionChange('browse')}
+              >
                 <Package className="w-4 h-4 mr-2" />
                 Browse New Arrivals
               </Button>
-              <Button variant="outline" className="w-full justify-start">
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => onSectionChange('favorites')}
+              >
                 <Heart className="w-4 h-4 mr-2" />
                 Manage Favorites
               </Button>
-              <Button variant="outline" className="w-full justify-start">
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => onSectionChange('reservations')}
+              >
                 <Calendar className="w-4 h-4 mr-2" />
                 View Reservations
               </Button>
-              <Button variant="outline" className="w-full justify-start">
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => onSectionChange('my-loans')}
+              >
                 <Clock className="w-4 h-4 mr-2" />
                 Loan History
               </Button>

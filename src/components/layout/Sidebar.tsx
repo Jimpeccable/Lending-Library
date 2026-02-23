@@ -11,7 +11,8 @@ import {
   Calendar,
   BarChart3,
   Shield,
-  HelpCircle
+  HelpCircle,
+  Database
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -52,7 +53,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, activeSection, onSec
     { id: 'users', label: 'Users', icon: Users },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'security', label: 'Security', icon: Shield },
-    { id: 'support', label: 'Support', icon: HelpCircle }
+    { id: 'support', label: 'Support', icon: HelpCircle },
+    { id: 'requirements', label: 'Future Requirements', icon: Database }
   ];
 
   const getMenuItems = () => {

@@ -19,17 +19,18 @@ interface SuperUserDashboardProps {
 }
 
 const SuperUserDashboard: React.FC<SuperUserDashboardProps> = ({ onSectionChange }) => {
-  const { libraries, items, members, loans } = useLibrary();
-  const totalItems = items.length;
-  const totalMembers = members.length;
+  const { libraries, allItems, allMembers, allLoans, allMembershipTiers } = useLibrary();
 
   const platformStats = {
     totalLibraries: libraries.length,
-    totalItems,
-    totalMembers,
-    totalRevenue: 15750.25,
-    activeLoans: loans.filter(l => l.status === 'active').length,
-    monthlyGrowth: 12.5
+    totalItems: allItems.length,
+    totalMembers: allMembers.length,
+    totalRevenue: allMembers.reduce((sum, member) => {
+      const tier = allMembershipTiers.find(t => t.id === member.membershipTierId);
+      return sum + (tier?.price || 0) + (member.outstandingFees || 0);
+    }, 0),
+    activeLoans: allLoans.filter(l => l.status === 'active').length,
+    monthlyGrowth: 15.8
   };
 
   const systemAlerts = [
@@ -56,14 +57,20 @@ const SuperUserDashboard: React.FC<SuperUserDashboardProps> = ({ onSectionChange
     }
   ];
 
-  const topLibrariesData = libraries.map(lib => ({
-    id: lib.id,
-    name: lib.name,
-    members: members.filter(m => m.libraryId === lib.id).length,
-    items: items.filter(i => i.libraryId === lib.id).length,
-    loans: loans.filter(l => l.libraryId === lib.id).length,
-    revenue: members.filter(m => m.libraryId === lib.id).reduce((sum, m) => sum + m.outstandingFees, 0)
-  })).sort((a, b) => b.members - a.members).slice(0, 3);
+  const topLibrariesData = libraries.map(lib => {
+    const libMembers = allMembers.filter(m => m.libraryId === lib.id);
+    return {
+      id: lib.id,
+      name: lib.name,
+      members: libMembers.length,
+      items: allItems.filter(i => i.libraryId === lib.id).length,
+      loans: allLoans.filter(l => l.libraryId === lib.id).length,
+      revenue: libMembers.reduce((sum, m) => {
+        const tier = allMembershipTiers.find(t => t.id === m.membershipTierId);
+        return sum + (tier?.price || 0) + (m.outstandingFees || 0);
+      }, 0)
+    };
+  }).sort((a, b) => b.members - a.members).slice(0, 3);
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {

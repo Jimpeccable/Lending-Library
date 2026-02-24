@@ -23,7 +23,7 @@ interface HostDashboardProps {
 }
 
 const HostDashboard: React.FC<HostDashboardProps> = ({ onSectionChange }) => {
-  const { items, members, loans, checkoutItem } = useLibrary();
+  const { items, members, loans, membershipTiers, checkoutItem } = useLibrary();
   const { allUsers } = useAuth();
   const [isQuickCheckoutOpen, setIsQuickCheckoutOpen] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState('');
@@ -40,7 +40,10 @@ const HostDashboard: React.FC<HostDashboardProps> = ({ onSectionChange }) => {
       const today = new Date();
       return loan.status === 'active' && dueDate < today;
     }).length,
-    revenue: 1250.75
+    revenue: members.reduce((sum, member) => {
+      const tier = membershipTiers.find(t => t.id === member.membershipTierId);
+      return sum + (tier?.price || 0) + (member.outstandingFees || 0);
+    }, 0)
   };
 
   const recentActivities = [
@@ -223,7 +226,7 @@ const HostDashboard: React.FC<HostDashboardProps> = ({ onSectionChange }) => {
                 onClick={() => onSectionChange('inventory')}
               >
                 <Package className="w-4 h-4 mr-2" />
-                Add New Item
+                Inventory Management
               </Button>
               <Button
                 variant="outline"
@@ -231,7 +234,7 @@ const HostDashboard: React.FC<HostDashboardProps> = ({ onSectionChange }) => {
                 onClick={() => onSectionChange('members')}
               >
                 <Users className="w-4 h-4 mr-2" />
-                Add Member
+                Member Directory
               </Button>
               <Button
                 variant="outline"
@@ -239,7 +242,7 @@ const HostDashboard: React.FC<HostDashboardProps> = ({ onSectionChange }) => {
                 onClick={() => onSectionChange('loans')}
               >
                 <BookOpen className="w-4 h-4 mr-2" />
-                Process Return
+                Loan Management
               </Button>
               <Button
                 variant="outline"

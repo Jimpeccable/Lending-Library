@@ -11,16 +11,20 @@ const Input: React.FC<InputProps> = ({
   error, 
   helper, 
   className = '', 
+  id,
   ...props 
 }) => {
+  const inputId = id || (label ? `input-${label.toLowerCase().replace(/\s+/g, '-')}` : undefined);
+
   return (
     <div className="space-y-1">
       {label && (
-        <label className="block text-sm font-medium text-gray-700">
+        <label htmlFor={inputId} className="block text-sm font-medium text-gray-700">
           {label}
         </label>
       )}
       <input
+        id={inputId}
         className={`
           block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm
           placeholder-gray-400 

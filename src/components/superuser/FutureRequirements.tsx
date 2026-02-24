@@ -18,8 +18,8 @@ const FutureRequirements: React.FC = () => {
       title: 'Database Migration',
       icon: Database,
       items: [
-        { name: 'MongoDB Integration', status: 'ready', description: 'Replace localStorage with MongoDB Atlas. Requires setting up a Node.js/Express backend with Mongoose.' },
-        { name: 'Supabase Support', status: 'ready', description: 'Alternative PostgreSQL option. Use Supabase client for real-time updates and built-in Auth.' },
+        { name: 'MongoDB Integration', status: 'ready', description: 'Replace localStorage with MongoDB Atlas. Requirements: Node.js/Express backend, Mongoose ODM, JWT Auth, and URI Connection String.' },
+        { name: 'Supabase Support', status: 'ready', description: 'Alternative PostgreSQL option. Requirements: Supabase Client SDK, Project URL, Anon Key, and SQL Schema migrations.' },
         { name: 'Data Schema Validation', status: 'planned', description: 'Implement Zod or Joi schemas for all models (Items, Users, Loans) before migration.' }
       ]
     },
@@ -93,6 +93,50 @@ const FutureRequirements: React.FC = () => {
             </Card>
           );
         })}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card title="MongoDB Connection Checklist" className="border-green-100">
+          <ul className="space-y-2 text-sm text-gray-600">
+            <li className="flex items-center space-x-2">
+              <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+              <span>Set up MongoDB Atlas Cluster</span>
+            </li>
+            <li className="flex items-center space-x-2">
+              <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+              <span>Configure Mongoose Models for Items, Users, and Loans</span>
+            </li>
+            <li className="flex items-center space-x-2">
+              <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+              <span>Create Express.js REST API endpoints</span>
+            </li>
+            <li className="flex items-center space-x-2">
+              <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+              <span>Update Contexts to use Axios for API calls</span>
+            </li>
+          </ul>
+        </Card>
+
+        <Card title="Supabase Connection Checklist" className="border-blue-100">
+          <ul className="space-y-2 text-sm text-gray-600">
+            <li className="flex items-center space-x-2">
+              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
+              <span>Create Supabase Project & Database</span>
+            </li>
+            <li className="flex items-center space-x-2">
+              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
+              <span>Run SQL migrations to create tables</span>
+            </li>
+            <li className="flex items-center space-x-2">
+              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
+              <span>Configure RLS (Row Level Security) Policies</span>
+            </li>
+            <li className="flex items-center space-x-2">
+              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
+              <span>Initialize Supabase Client in Auth & Library Contexts</span>
+            </li>
+          </ul>
+        </Card>
       </div>
 
       <Card className="bg-blue-600 text-white border-none">

@@ -28,8 +28,17 @@ const Messages: React.FC = () => {
 
   // Group messages into conversations
   const conversationsMap = messages.reduce((acc, msg) => {
-    const otherPartyId = msg.isFromMember ? msg.senderId : msg.recipientId;
-    const otherPartyName = msg.isFromMember ? msg.senderName : (msg.recipientId === '1' ? 'Library Host' : 'Member');
+    const isHost = user?.role === 'host';
+    const otherPartyId = isHost
+      ? (msg.isFromMember ? msg.senderId : msg.recipientId)
+      : (msg.isFromMember ? msg.recipientId : msg.senderId);
+
+    const otherPartyName = isHost
+      ? (msg.isFromMember ? msg.senderName : 'Member')
+      : (msg.isFromMember ? 'Library Host' : msg.senderName);
+
+    // Filter messages for current user
+    if (msg.senderId !== user?.id && msg.recipientId !== user?.id) return acc;
 
     if (!acc[otherPartyId]) {
       acc[otherPartyId] = {
@@ -37,13 +46,13 @@ const Messages: React.FC = () => {
         member: otherPartyName,
         lastMessage: msg.content,
         timestamp: msg.timestamp,
-        unread: msg.read ? 0 : (msg.isFromMember ? 1 : 0),
+        unread: msg.read ? 0 : (msg.recipientId === user?.id ? 1 : 0),
         status: 'active'
       };
     } else {
       acc[otherPartyId].lastMessage = msg.content;
       acc[otherPartyId].timestamp = msg.timestamp;
-      if (!msg.read && msg.isFromMember) {
+      if (!msg.read && msg.recipientId === user?.id) {
         acc[otherPartyId].unread += 1;
       }
     }
@@ -53,8 +62,8 @@ const Messages: React.FC = () => {
   const conversations = Object.values(conversationsMap);
 
   const selectedMessages = messages.filter(msg =>
-    (msg.isFromMember && msg.senderId === selectedConversation) ||
-    (!msg.isFromMember && msg.recipientId === selectedConversation)
+    (msg.senderId === selectedConversation && msg.recipientId === user?.id) ||
+    (msg.recipientId === selectedConversation && msg.senderId === user?.id)
   ).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
   const templates = [
@@ -85,7 +94,7 @@ const Messages: React.FC = () => {
         messageText,
         user.id,
         user.fullName,
-        false
+        user.role === 'borrower'
       );
       setMessageText('');
     }
@@ -114,13 +123,19 @@ const Messages: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Messages & Communication</h1>
-          <p className="text-gray-600">Communicate with members and manage notifications</p>
+            <p className="text-gray-600">
+              {user?.role === 'host'
+                ? 'Communicate with members and manage notifications'
+                : 'Message your library host and check notifications'}
+            </p>
         </div>
         <div className="flex space-x-3">
-          <Button variant="outline">
-            <Bell className="w-4 h-4 mr-2" />
-            Templates
-          </Button>
+          {user?.role === 'host' && (
+            <Button variant="outline">
+              <Bell className="w-4 h-4 mr-2" />
+              Templates
+            </Button>
+          )}
           <Button onClick={() => setIsComposeModalOpen(true)}>
             <Mail className="w-4 h-4 mr-2" />
             Compose
@@ -129,6 +144,7 @@ const Messages: React.FC = () => {
       </div>
 
       {/* Stats */}
+      {user?.role === 'host' && (
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <div className="text-center">
@@ -159,6 +175,7 @@ const Messages: React.FC = () => {
           </div>
         </Card>
       </div>
+      )}
 
       {/* Messages Interface */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -203,16 +220,22 @@ const Messages: React.FC = () => {
         {/* Message Thread */}
         <Card className="lg:col-span-2">
           {selectedConversation ? (
-            <div className="flex flex-col h-96">
+            <div className="flex flex-col h-[500px]">
               {/* Header */}
               <div className="flex items-center justify-between pb-4 border-b border-gray-200">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                    <span className="text-sm font-medium text-gray-600">JB</span>
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <span className="text-sm font-medium text-blue-600">
+                      {conversationsMap[selectedConversation]?.member.charAt(0)}
+                    </span>
                   </div>
                   <div>
-                    <h3 className="font-medium text-gray-900">John Borrower</h3>
-                    <p className="text-sm text-gray-500">Active member</p>
+                    <h3 className="font-medium text-gray-900">
+                      {conversationsMap[selectedConversation]?.member}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      {user?.role === 'host' ? 'Library Member' : 'Library Host'}
+                    </p>
                   </div>
                 </div>
                 <Button variant="ghost" size="sm">
@@ -221,28 +244,31 @@ const Messages: React.FC = () => {
               </div>
 
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto py-4 space-y-4">
-                {selectedMessages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`flex ${message.isFromMember ? 'justify-start' : 'justify-end'}`}
-                  >
+              <div className="flex-1 overflow-y-auto py-4 space-y-4 px-2">
+                {selectedMessages.map((message) => {
+                  const isMe = message.senderId === user?.id;
+                  return (
                     <div
-                      className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                        message.isFromMember
-                          ? 'bg-gray-100 text-gray-900'
-                          : 'bg-blue-600 text-white'
-                      }`}
+                      key={message.id}
+                      className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
                     >
+                      <div
+                        className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                          isMe
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-100 text-gray-900'
+                        }`}
+                      >
                       <p className="text-sm">{message.content}</p>
                       <p className={`text-xs mt-1 ${
-                        message.isFromMember ? 'text-gray-500' : 'text-blue-100'
+                        isMe ? 'text-blue-100' : 'text-gray-500'
                       }`}>
                         {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
                   </div>
-                ))}
+                );
+              })}
               </div>
 
               {/* Message Input */}
@@ -274,6 +300,7 @@ const Messages: React.FC = () => {
       </div>
 
       {/* Message Templates */}
+      {user?.role === 'host' && (
       <Card>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-semibold text-gray-900">Message Templates</h2>
@@ -297,6 +324,7 @@ const Messages: React.FC = () => {
           ))}
         </div>
       </Card>
+      )}
 
       {/* Compose Message Modal */}
       <Modal
@@ -306,16 +334,24 @@ const Messages: React.FC = () => {
         size="lg"
       >
         <div className="space-y-4">
-          <Select
-            label="Recipient"
-            options={[
-              { value: 'all', label: 'All Members' },
-              { value: 'active', label: 'Active Members Only' },
-              { value: 'overdue', label: 'Members with Overdue Items' },
-              { value: 'individual', label: 'Select Individual Member' }
-            ]}
-            placeholder="Choose recipients..."
-          />
+          {user?.role === 'host' ? (
+            <Select
+              label="Recipient"
+              options={[
+                { value: 'all', label: 'All Members' },
+                { value: 'active', label: 'Active Members Only' },
+                { value: 'overdue', label: 'Members with Overdue Items' },
+                { value: 'individual', label: 'Select Individual Member' }
+              ]}
+              placeholder="Choose recipients..."
+            />
+          ) : (
+            <Input
+              label="Recipient"
+              value="Library Host"
+              disabled
+            />
+          )}
           
           <Input
             label="Subject"

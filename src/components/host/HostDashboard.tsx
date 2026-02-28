@@ -6,7 +6,6 @@ import {
   DollarSign, 
   TrendingUp, 
   AlertTriangle,
-  Calendar,
   Bell
 } from 'lucide-react';
 import { useLibrary } from '../../context/LibraryContext';
@@ -54,7 +53,7 @@ const HostDashboard: React.FC<HostDashboardProps> = ({ onSectionChange }) => {
         id: loan.id,
         type: loan.status === 'returned' ? 'return' : 'checkout',
         message: `${user?.fullName || 'Someone'} ${loan.status === 'returned' ? 'returned' : 'checked out'} ${item?.name || 'an item'}`,
-        time: new Date(loan.updatedAt).toLocaleDateString(),
+        time: loan.updatedAt,
         icon: loan.status === 'returned' ? Package : BookOpen,
         color: loan.status === 'returned' ? 'text-green-600' : 'text-blue-600'
       };
@@ -65,7 +64,7 @@ const HostDashboard: React.FC<HostDashboardProps> = ({ onSectionChange }) => {
         id: member.id,
         type: 'member',
         message: `New member registration: ${user?.fullName || 'Unknown'}`,
-        time: new Date(member.joinDate).toLocaleDateString(),
+        time: member.joinDate,
         icon: Users,
         color: 'text-teal-600'
       };
@@ -94,9 +93,9 @@ const HostDashboard: React.FC<HostDashboardProps> = ({ onSectionChange }) => {
           <p className="text-gray-600">Welcome back! Here's what's happening with your library.</p>
         </div>
         <div className="flex space-x-3">
-          <Button variant="outline">
-            <Calendar className="w-4 h-4 mr-2" />
-            View Calendar
+          <Button variant="outline" onClick={() => onSectionChange('reports')}>
+            <TrendingUp className="w-4 h-4 mr-2" />
+            View Reports
           </Button>
           <Button onClick={() => setIsQuickCheckoutOpen(true)}>
             <Package className="w-4 h-4 mr-2" />
@@ -162,7 +161,7 @@ const HostDashboard: React.FC<HostDashboardProps> = ({ onSectionChange }) => {
           <Card>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
-              <Button variant="ghost" size="sm">View All</Button>
+              <Button variant="ghost" size="sm" onClick={() => onSectionChange('loans')}>View All</Button>
             </div>
             <div className="space-y-4">
               {recentActivities.map((activity) => {
@@ -174,7 +173,7 @@ const HostDashboard: React.FC<HostDashboardProps> = ({ onSectionChange }) => {
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-medium text-gray-900">{activity.message}</p>
-                      <p className="text-xs text-gray-500">{activity.time}</p>
+                      <p className="text-xs text-gray-500">{new Date(activity.time).toLocaleDateString()}</p>
                     </div>
                   </div>
                 );

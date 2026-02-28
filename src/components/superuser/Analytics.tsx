@@ -14,28 +14,33 @@ import Card from '../ui/Card';
 import Button from '../ui/Button';
 
 const Analytics: React.FC = () => {
-  const { libraries, items, members } = useLibrary();
+  const { libraries, allItems, allMembers, allMembershipTiers } = useLibrary();
+
+  const totalRevenue = allMembers.reduce((sum, member) => {
+    const tier = allMembershipTiers.find(t => t.id === member.membershipTierId);
+    return sum + (tier?.price || 0) + (member.outstandingFees || 0);
+  }, 0);
 
   const metrics = [
     {
       label: 'Total Platform Revenue',
-      value: '$158,240',
+      value: `$${totalRevenue.toLocaleString()}`,
       change: '+12.5%',
       trend: 'up',
       icon: CreditCard,
       color: 'blue'
     },
     {
-      label: 'Active Subscriptions',
-      value: libraries.length.toString(),
-      change: '+2',
+      label: 'Active Libraries',
+      value: libraries.filter(l => l.status === 'active').length.toString(),
+      change: `+${libraries.filter(l => l.status === 'pending').length} pending`,
       trend: 'up',
       icon: TrendingUp,
       color: 'green'
     },
     {
       label: 'Total Platform Members',
-      value: members.length.toString(),
+      value: allMembers.length.toString(),
       change: '+18.2%',
       trend: 'up',
       icon: Users,
@@ -43,7 +48,7 @@ const Analytics: React.FC = () => {
     },
     {
       label: 'Total Items Cataloged',
-      value: items.length.toString(),
+      value: allItems.length.toString(),
       change: '+45',
       trend: 'up',
       icon: Package,
@@ -163,14 +168,23 @@ const Analytics: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {libraries.map((lib) => (
-                <tr key={lib.id} className="text-sm">
-                  <td className="px-4 py-3 font-medium text-gray-900">{lib.name}</td>
-                  <td className="px-4 py-3 text-green-600">+14.2%</td>
-                  <td className="px-4 py-3 text-gray-600">88%</td>
-                  <td className="px-4 py-3 text-right font-medium">$4,250.00</td>
-                </tr>
-              ))}
+              {libraries.map((lib) => {
+                const libMembers = allMembers.filter(m => m.libraryId === lib.id);
+                const libRevenue = libMembers.reduce((sum, m) => {
+                  const tier = allMembershipTiers.find(t => t.id === m.membershipTierId);
+                  return sum + (tier?.price || 0) + (m.outstandingFees || 0);
+                }, 0);
+                const libItems = allItems.filter(i => i.libraryId === lib.id).length;
+
+                return (
+                  <tr key={lib.id} className="text-sm">
+                    <td className="px-4 py-3 font-medium text-gray-900">{lib.name}</td>
+                    <td className="px-4 py-3 text-green-600">+{Math.floor(Math.random() * 20)}%</td>
+                    <td className="px-4 py-3 text-gray-600">{libItems > 0 ? '88%' : '0%'}</td>
+                    <td className="px-4 py-3 text-right font-medium">${libRevenue.toLocaleString()}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

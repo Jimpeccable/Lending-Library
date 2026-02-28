@@ -22,7 +22,7 @@ export function Reservations() {
       addToast('Reservation cancelled', 'success');
       setShowCancelModal(false);
       setSelectedReservation(null);
-    } catch (error) {
+    } catch {
       addToast('Failed to cancel reservation', 'danger');
     }
   };

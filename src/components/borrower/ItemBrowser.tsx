@@ -34,7 +34,7 @@ const ItemBrowser: React.FC = () => {
     try {
       reserveItem(itemId, user.id);
       addToast('Item reserved successfully', 'success');
-    } catch (error) {
+    } catch {
       addToast('Failed to reserve item', 'danger');
     }
   };

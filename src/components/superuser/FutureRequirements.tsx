@@ -56,7 +56,7 @@ const FutureRequirements: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Future Requirements</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Future Requirments</h1>
           <p className="text-gray-600">Technical roadmap for production scaling and database integration</p>
         </div>
         <Badge variant="primary" className="w-fit">v1.0 Roadmap</Badge>
@@ -136,6 +136,39 @@ const FutureRequirements: React.FC = () => {
               <span>Initialize Supabase Client in Auth & Library Contexts</span>
             </li>
           </ul>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card title="Environment Configuration (.env)">
+          <div className="bg-gray-900 rounded-lg p-4 font-mono text-xs text-blue-400">
+            <p># API Configuration</p>
+            <p>VITE_API_URL=https://api.toylibrary.com</p>
+            <p className="mt-2"># MongoDB Settings</p>
+            <p>MONGODB_URI=mongodb+srv://admin:pass@cluster.mongodb.net/toylibrary</p>
+            <p className="mt-2"># Supabase Settings</p>
+            <p>VITE_SUPABASE_URL=https://your-project.supabase.co</p>
+            <p>VITE_SUPABASE_ANON_KEY=your-anon-key</p>
+          </div>
+        </Card>
+
+        <Card title="Backend Service Requirements">
+          <div className="space-y-4">
+            <div className="flex items-start space-x-3">
+              <Server className="w-5 h-5 text-purple-600 mt-1" />
+              <div>
+                <p className="text-sm font-medium text-gray-900">Node.js / Express API</p>
+                <p className="text-xs text-gray-600">A RESTful API to handle data persistence and business logic currently in React Contexts.</p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-3">
+              <ShieldCheck className="w-5 h-5 text-green-600 mt-1" />
+              <div>
+                <p className="text-sm font-medium text-gray-900">Security Middleware</p>
+                <p className="text-xs text-gray-600">Implement CORS, Helmet, and Rate Limiting to protect the API endpoints.</p>
+              </div>
+            </div>
+          </div>
         </Card>
       </div>
 

@@ -62,7 +62,7 @@ const Profile: React.FC = () => {
           address: profileData.address
         });
         addToast('Profile updated successfully', 'success');
-      } catch (error) {
+      } catch {
         addToast('Failed to update profile', 'danger');
       }
     }

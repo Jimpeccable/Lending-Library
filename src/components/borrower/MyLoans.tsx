@@ -62,7 +62,7 @@ const MyLoans: React.FC = () => {
         setIsRenewModalOpen(false);
         setSelectedLoan(null);
         setRenewalReason('');
-      } catch (error) {
+      } catch {
         addToast('Failed to submit renewal request', 'danger');
       }
     }

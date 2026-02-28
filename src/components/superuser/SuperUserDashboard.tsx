@@ -33,6 +33,8 @@ const SuperUserDashboard: React.FC<SuperUserDashboardProps> = ({ onSectionChange
     monthlyGrowth: 15.8
   };
 
+  const pendingLibrariesCount = libraries.filter(l => l.status === 'pending').length;
+
   const systemAlerts = [
     {
       id: '1',
@@ -44,9 +46,9 @@ const SuperUserDashboard: React.FC<SuperUserDashboardProps> = ({ onSectionChange
     {
       id: '2',
       type: 'info',
-      message: `${libraries.filter(l => l.status === 'pending').length} library registration pending approval`,
+      message: `${pendingLibrariesCount} library registration${pendingLibrariesCount !== 1 ? 's' : ''} pending approval`,
       time: 'Just now',
-      severity: 'low'
+      severity: pendingLibrariesCount > 0 ? 'medium' : 'low'
     },
     {
       id: '3',
@@ -199,8 +201,8 @@ const SuperUserDashboard: React.FC<SuperUserDashboardProps> = ({ onSectionChange
             </div>
             
             <div className="mt-4 pt-4 border-t border-gray-200">
-              <Button variant="outline" className="w-full">
-                View All Alerts
+              <Button variant="outline" className="w-full" onClick={() => onSectionChange?.('analytics')}>
+                View Platform Analytics
               </Button>
             </div>
           </Card>
@@ -210,7 +212,7 @@ const SuperUserDashboard: React.FC<SuperUserDashboardProps> = ({ onSectionChange
         <Card>
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold text-gray-900">Top Libraries</h2>
-            <Button variant="ghost" size="sm">View All</Button>
+            <Button variant="ghost" size="sm" onClick={() => onSectionChange?.('libraries')}>View All</Button>
           </div>
           
           <div className="space-y-4">
@@ -278,6 +280,10 @@ const SuperUserDashboard: React.FC<SuperUserDashboardProps> = ({ onSectionChange
             <Button variant="outline" className="w-full justify-start" onClick={() => onSectionChange?.('security')}>
               <Shield className="w-4 h-4 mr-2" />
               Security Audit
+            </Button>
+            <Button variant="outline" className="w-full justify-start" onClick={() => onSectionChange?.('requirements')}>
+              <Server className="w-4 h-4 mr-2" />
+              Future Requirments
             </Button>
           </div>
         </Card>
